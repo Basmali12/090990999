@@ -12,8 +12,9 @@ import "./financePages.css";
 import "./cashbox.css";
 const fmt = (n: number) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n);
+const deviceTime=()=>{const d=new Date();return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,19);};
 const initial = {
-  date: "2026-09-05T18:00",
+  date: "",
   source: "",
   target: "",
   currency: "",
@@ -37,7 +38,7 @@ export default function CashTransfer() {
   const [id] = useState(
     () => `DEMO-TR-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
   );
-  const [values, setValues] = useState({ ...initial });
+  const [values, setValues] = useState(() => ({ ...initial, date: deviceTime() }));
   const [error, setError] = useState("");
   const [saved, setSaved] = useState<Snapshot | null>(null);
   const [preview, setPreview] = useState(false);
@@ -131,12 +132,7 @@ export default function CashTransfer() {
           aria-label={label}
           type={type}
           value={values[key]}
-          onInput={
-            type === "datetime-local"
-              ? (e) => change(key, e.currentTarget.value)
-              : undefined
-          }
-          onChange={(e) => change(key, e.target.value)}
+          readOnly={key === "date"} onChange={key === "date" ? undefined : (e) => change(key, e.target.value)}
           maxLength={type === "text" ? 180 : undefined}
           step={type === "number" ? "any" : undefined}
         />
@@ -244,47 +240,7 @@ export default function CashTransfer() {
             </p>
           )}
         </section>
-        <section className="panel voucher-section">
-          <h2>معاينة الأرصدة</h2>
-          <div className="finance-summary" aria-live="polite">
-            {[
-              [
-                "رصيد المصدر قبل التحويل",
-                sourceBefore,
-                values.currency,
-                !!source,
-              ],
-              [
-                "رصيد المستلم قبل التحويل",
-                targetBefore,
-                values.receivedCurrency,
-                !!target,
-              ],
-              ["الرصيد المتوقع للمصدر", sourceAfter, values.currency, !!source],
-              [
-                "الرصيد المتوقع للمستلم",
-                targetAfter,
-                values.receivedCurrency,
-                !!target,
-              ],
-            ].map(([label, value, currency, valid]) => (
-              <article key={String(label)}>
-                <small>{label}</small>
-                <b dir="ltr">
-                  {valid && currency
-                    ? `${fmt(Number(value))} ${currency}`
-                    : "—"}
-                </b>
-              </article>
-            ))}
-          </div>
-          {source && values.currency && amount > sourceBefore && (
-            <p className="voucher-warning" role="status">
-              تنبيه: المبلغ أكبر من رصيد المصدر. هذا تحذير بصري فقط ولا يمنع
-              الحفظ التجريبي.
-            </p>
-          )}
-        </section>
+
         {error && (
           <p className="tl-error" role="alert">
             {error}
@@ -306,7 +262,7 @@ export default function CashTransfer() {
             className="tl-button"
             type="button"
             onClick={() => {
-              setValues({ ...initial });
+              setValues({ ...initial, date: deviceTime() });
               setError("");
               setSaved(null);
             }}
@@ -347,22 +303,6 @@ export default function CashTransfer() {
                   "المبلغ المستلم",
                   `${fmt(saved.received)} ${saved.receivedCurrency}`,
                 ],
-                [
-                  "رصيد المصدر قبل",
-                  `${fmt(saved.sourceBefore)} ${saved.currency}`,
-                ],
-                [
-                  "رصيد المصدر المتوقع",
-                  `${fmt(saved.sourceAfter)} ${saved.currency}`,
-                ],
-                [
-                  "رصيد المستلم قبل",
-                  `${fmt(saved.targetBefore)} ${saved.receivedCurrency}`,
-                ],
-                [
-                  "رصيد المستلم المتوقع",
-                  `${fmt(saved.targetAfter)} ${saved.receivedCurrency}`,
-                ],
                 ["السبب", saved.reason || "—"],
                 ["البيان", saved.description || "—"],
                 ["الملاحظات", saved.notes || "—"],
@@ -380,3 +320,4 @@ export default function CashTransfer() {
     </div>
   );
 }
+

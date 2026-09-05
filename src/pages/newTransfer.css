@@ -448,3 +448,6 @@
     border-color: #ddd;
   }
 }
+
+.new-transfer .transfer-optional{margin:14px 0;border:1px solid var(--border);border-radius:12px;padding:12px}.new-transfer .transfer-optional>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-size:14px;gap:10px}.new-transfer .transfer-optional>summary::before{content:"+"}.new-transfer .transfer-optional[open]>summary::before{content:"−"}
+

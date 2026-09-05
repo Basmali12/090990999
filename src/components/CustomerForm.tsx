@@ -1,0 +1,12 @@
+import {useState} from 'react';
+import {saveCustomer,useCustomers} from '../data/customerRecords';
+import type {Customer} from '../data/customerRecords';
+import {PremiumButton} from './premium/MotionUI';
+export default function CustomerForm({customer,onSaved,onCancel}:{customer?:Customer;onSaved:()=>void;onCancel:()=>void}){
+ const customers=useCustomers();const [draft,setDraft]=useState({name:customer?.name||'',phone:customer?.phone||'',address:customer?.address||'',notes:customer?.notes||''});const [error,setError]=useState('');const [saved,setSaved]=useState(false);
+ const code=customer?.id||`C-${Math.max(1000,...customers.map(c=>Number(c.id.slice(2))))+1}`;
+ const [savedCode,setSavedCode]=useState('');
+ return <form noValidate onSubmit={e=>{e.preventDefault();if(saved)return;const phone=draft.phone.trim().replace(/[٠-٩]/g,d=>String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));if(!draft.name.trim()){setError('اسم العميل مطلوب.');return;}if(phone&&(!/^\+?[\d\s()-]+$/.test(phone)||phone.replace(/\D/g,'').length<7||phone.replace(/\D/g,'').length>15)){setError('أدخل هاتفًا صحيحًا من 7 إلى 15 رقمًا، أو اتركه فارغًا.');return;}saveCustomer(customer?.id||null,{...draft,name:draft.name.trim(),phone});setSavedCode(code);setSaved(true);setError('');onSaved();}}>
+ <div className="tl-edit-grid"><label className="tl-field"><span>كود العميل</span><input aria-label="كود العميل" readOnly value={saved?savedCode:code}/></label>{(['name','phone','address','notes'] as const).map((key,i)=><label className="tl-field" key={key}><span>{['اسم العميل','رقم الهاتف','العنوان','ملاحظات'][i]}{key==='name'?' *':''}</span>{key==='notes'?<textarea aria-label="ملاحظات" maxLength={1000} rows={3} value={draft[key]} onChange={e=>{setDraft({...draft,[key]:e.target.value});setSaved(false);}}/>:<input aria-label={['اسم العميل','رقم الهاتف','العنوان'][i]} type={key==='phone'?'tel':'text'} required={key==='name'} maxLength={key==='phone'?25:160} value={draft[key]} onChange={e=>{setDraft({...draft,[key]:e.target.value});setSaved(false);}}/>}</label>)}</div>
+ {error&&<p className="tl-error" role="alert">{error}</p>}<div className="tl-modal-actions"><PremiumButton type="submit" variant="primary" disabled={saved}>حفظ العميل</PremiumButton><PremiumButton type="button" onClick={()=>{setDraft({name:'',phone:'',address:'',notes:''});setError('');setSaved(false);}}>مسح</PremiumButton><PremiumButton type="button" onClick={onCancel}>إلغاء</PremiumButton></div></form>;
+}

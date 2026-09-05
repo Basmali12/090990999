@@ -1,3 +1,4 @@
+import {currentVersion} from '../updates/versionService';
 import {motion,useReducedMotion} from 'motion/react';
 import { useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
@@ -33,11 +34,11 @@ export default function Sidebar({
       )}
       <div className="brand">
         <span className="brand-mark">
-          <Icon name="exchange" size={27} />
+          <img src={`${import.meta.env.BASE_URL}icon-192.png`} alt="شعار أعمال المستقبل" width="43" height="43" style={{borderRadius: 12, objectFit: 'contain', flexShrink: 0}} />
         </span>
         <div>
           <strong>
-            الصيرفة<span>والحوالات</span>
+            أعمال المستقبل
           </strong>
           <small>إدارة مالية. رؤية أوضح.</small>
         </div>
@@ -106,11 +107,12 @@ export default function Sidebar({
           <b>نسخة استعراضية</b>
           <small>بيانات محلية تجريبية فقط</small>
         </div>
-        <span>v0.1</span>
+        <span title={`الإصدار ${currentVersion}`}>v{currentVersion}</span>
       </div>
     </aside>
   );
 }
+
 
 
 

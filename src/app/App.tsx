@@ -1,3 +1,4 @@
+import UpdateNotification from '../updates/UpdateNotification';
 import {PageTransition} from '../components/premium/MotionUI';
 import PremiumRuntime from '../components/premium/PremiumRuntime';
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
@@ -12,7 +13,7 @@ import TransferList from "../pages/TransferList";
 import PendingTransfers from "../pages/PendingTransfers";
 import Customers from "../pages/Customers";
 import CustomerStatement from "../pages/CustomerStatement";
-import CustomerMovements from "../pages/CustomerMovements";
+import NewCustomer from "../pages/NewCustomer";
 import Partners from "../pages/Partners";
 import PartnerBalances from "../pages/PartnerBalances";
 import PartnerStatement from "../pages/PartnerStatement";
@@ -87,7 +88,7 @@ export default function App() {
     }
   }, [theme]);
   useEffect(() => {
-    document.title = `${pathname === "/transfers/new" ? "إرسال حوالة جديدة" : pages.find((p) => p.path === pathname)?.title || "الرئيسية"} | نظام الصيرفة والحوالات`;
+    document.title = `${pathname === "/transfers/new" ? "إرسال حوالة جديدة" : pages.find((p) => p.path === pathname)?.title || "الرئيسية"} | أعمال المستقبل`;
     window.scrollTo(0, 0);
   }, [pathname]);
   return (
@@ -127,6 +128,7 @@ export default function App() {
             mode === "mobile" ? setDrawerOpen(true) : setCollapsed(!collapsed)
           }
         />
+        <UpdateNotification />
         <PageTransition key={pathname} id="main-content">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -168,13 +170,10 @@ export default function App() {
               path="/customers/statement"
               element={<CustomerStatement />}
             />
-            <Route
-              path="/customers/movements"
-              element={<CustomerMovements />}
-            />
+            <Route path="/customers/new" element={<NewCustomer/>}/>
             <Route
               path="/customers/activity"
-              element={<Navigate to="/customers/movements" replace />}
+              element={<Navigate to="/customers" replace />}
             />
             <Route path="/partners" element={<Partners />} />
             <Route path="/partners/balances" element={<PartnerBalances />} />
@@ -208,7 +207,7 @@ export default function App() {
                     "/transfers/undelivered",
                     "/customers",
                     "/customers/statement",
-                    "/customers/movements",
+                    "/customers/new",
                     "/customers/activity",
                     "/partners",
                     "/cashbox",
@@ -274,6 +273,9 @@ export default function App() {
     </div>
   );
 }
+
+
+
 
 
 

@@ -28,7 +28,7 @@ function empty() {
   };
 }
 type Values = ReturnType<typeof empty>;
-type Snapshot = Values & { id: string; before: number; after: number };
+type Snapshot = Values & { id: string };
 export default function CashVoucher({
   payment = false,
 }: {
@@ -48,13 +48,7 @@ export default function CashVoucher({
   const [saved, setSaved] = useState<Snapshot | null>(null);
   const [preview, setPreview] = useState(false);
   const [message, setMessage] = useState("");
-  const amount = Number.isFinite(Number(values.amount))
-    ? Math.min(1e12, Math.max(0, Number(values.amount)))
-    : 0;
   const currencyValid = Object.hasOwn(cashboxBalances, values.currency);
-  const before = currencyValid ? cashboxBalances[values.currency] : 0;
-  const after = before + (payment ? -amount : amount);
-  const excess = payment && currencyValid && amount > before;
   const parties =
     values.partyType === "عميل"
       ? customers.map((c) => c.name)
@@ -99,7 +93,7 @@ export default function CashVoucher({
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
-    setSaved({ ...values, party: values.party.trim(), id, before, after });
+    setSaved({ ...values, party: values.party.trim(), id });
     setMessage(
       "تم حفظ السند التجريبي في ذاكرة الصفحة فقط؛ لا يؤثر على رصيد الصندوق أو سجل الحركات.",
     );
@@ -127,12 +121,7 @@ export default function CashVoucher({
           type={type}
           required={required}
           value={values[key]}
-          onInput={
-            type === "datetime-local"
-              ? (e) => change(key, e.currentTarget.value)
-              : undefined
-          }
-          onChange={(e) => change(key, e.target.value)}
+          readOnly={key === "date"} onChange={key === "date" ? undefined : (e) => change(key, e.target.value)}
           min={type === "number" ? 0 : undefined}
           max={type === "number" ? 1e12 : undefined}
           step={type === "number" ? "any" : undefined}
@@ -157,7 +146,7 @@ export default function CashVoucher({
       </nav>
       <PageHeader
         title={title}
-        description={`إعداد ${title} تجريبي ومراجعة الرصيد المتوقع قبل الحفظ.`}
+        description={`إعداد ${title} تجريبي ومراجعة بياناته قبل الحفظ.`}
       />
       <p className="tl-disclaimer">
         محاكاة محلية فقط. السند محفوظ مؤقتًا داخل الصفحة ويُفقد عند المغادرة أو
@@ -256,40 +245,7 @@ export default function CashVoucher({
             </label>
           </div>
         </section>
-        <section className="panel voucher-section">
-          <h2>معاينة الرصيد</h2>
-          <div className="finance-summary" aria-live="polite">
-            {[
-              ["رصيد الصندوق الحالي", before],
-              [payment ? "المبلغ المطلوب صرفه" : "المبلغ المقبوض", amount],
-              [
-                payment
-                  ? "الرصيد المتوقع بعد الصرف"
-                  : "الرصيد المتوقع بعد القبض",
-                after,
-              ],
-            ].map(([label, value]) => (
-              <article key={label}>
-                <small>{label}</small>
-                <b dir="ltr">
-                  {currencyValid
-                    ? `${fmt(Number(value))} ${values.currency}`
-                    : "—"}
-                </b>
-              </article>
-            ))}
-          </div>
-          {excess && (
-            <p className="voucher-warning" role="status">
-              تنبيه: المبلغ التجريبي أكبر من رصيد الصندوق الحالي. الرصيد المتوقع
-              سالب؛ هذا تحذير بصري فقط ولا يمنع الحفظ التجريبي.
-            </p>
-          )}
-          <p className="tl-disclaimer">
-            المعاينة = الرصيد الحالي {payment ? "−" : "+"} المبلغ. لن يحدث{" "}
-            {payment ? "خصم" : "إيداع"} فعلي عند الحفظ.
-          </p>
-        </section>
+
         <p className="tl-notice" role="status">
           {message}
         </p>
@@ -345,11 +301,7 @@ export default function CashVoucher({
                 ["المرجع", saved.reference || "—"],
                 ["البيان", saved.description || "—"],
                 ["الملاحظات", saved.notes || "—"],
-                [
-                  "رصيد الصندوق الحالي",
-                  `${fmt(saved.before)} ${saved.currency}`,
-                ],
-                ["الرصيد المتوقع", `${fmt(saved.after)} ${saved.currency}`],
+
               ]}
             />
             <button
@@ -364,3 +316,4 @@ export default function CashVoucher({
     </div>
   );
 }
+

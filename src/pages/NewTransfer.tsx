@@ -15,7 +15,7 @@ const blank = {
   recipientAddress: "",
   amount: "",
   currency: "",
-  rate: "1",
+  commission: "0",
   companyRate: "20",
   voucher: "",
   reason: "",
@@ -65,15 +65,10 @@ export default function NewTransfer() {
   const amount = Number.isFinite(Number(values.amount))
     ? Math.min(1e12, Math.max(0, Number(values.amount)))
     : 0;
-  const percent = Math.min(100, Math.max(0, Number(values.rate) || 0));
-  const companyPercent = Math.min(
-    100,
-    Math.max(0, Number(values.companyRate) || 0),
-  );
   const currency = transferMock.currencies.find(
     (c) => c.code === values.currency,
   );
-  const commission = (amount * percent) / 100;
+  const commission = Number.isFinite(Number(values.commission)) ? Math.max(0, Number(values.commission)) : 0;
   const usd = currency ? (amount + commission) / currency.perDollar : 0;
   const iqd = usd * 1480;
   const toman = usd * 60000;
@@ -154,7 +149,7 @@ export default function NewTransfer() {
     )
       next.amount = "أدخل مبلغًا أكبر من صفر وحتى 1,000,000,000,000";
     if (!currency) next.currency = "اختر عملة الحوالة";
-    for (const key of ["rate", "companyRate"] as const)
+    for (const key of ["companyRate"] as const)
       if (
         !values[key] ||
         !Number.isFinite(Number(values[key])) ||
@@ -162,6 +157,7 @@ export default function NewTransfer() {
         Number(values[key]) > 100
       )
         next[key] = "أدخل نسبة بين 0 و100";
+    if (!values.commission.trim() || !Number.isFinite(Number(values.commission)) || Number(values.commission)<0 || Number(values.commission)>1e12) next.commission="أدخل عمولة يدوية من صفر إلى تريليون";
     setErrors(next);
     const first = Object.keys(next)[0];
     if (first) {
@@ -185,7 +181,7 @@ export default function NewTransfer() {
       setPreview(true);
   }
   function clear() {
-    setValues({ ...blank, rate: "", companyRate: "" });
+    setValues({ ...blank, commission: "0", companyRate: "20" });
     setErrors({});
     setSaved(false);
     setMessage("تم مسح الحقول.");
@@ -298,30 +294,15 @@ export default function NewTransfer() {
                 </small>
               )}
             </div>
-            {field("rate", "النسبة (%)", { type: "number", min: 0, max: 100 })}
-            <div className="transfer-field">
-              <label htmlFor="transfer-commission">العمولة</label>
-              <output id="transfer-commission" className="computed-value">
-                <b dir="ltr">{number(commission)}</b>
-                <small>{currency?.code || "—"}</small>
-              </output>
-            </div>
+            {field("commission", "العمولة", {type:"number",min:0,max:1e12})}
             {field("companyRate", "نسبة الشركة (%)", {
               type: "number",
               min: 0,
               max: 100,
             })}
-            <div className="company-note">
-              <Icon name="chart" size={18} />
-              <span>
-                حصة الشركة من العمولة:{" "}
-                <b dir="ltr">{number((commission * companyPercent) / 100)}</b>{" "}
-                {currency?.code || "—"}
-                <small>عرض توضيحي، لا تُضاف مرة أخرى إلى المبلغ المطلوب.</small>
-              </span>
-            </div>
+
           </div>
-          <div className="transfer-totals" aria-live="polite">
+          <details className="transfer-optional"><summary>عرض المبالغ التوضيحية</summary><div className="transfer-totals" aria-live="polite">
             {[
               ["المبلغ المطلوب بالدولار", usd, "USD"],
               ["المبلغ المطلوب بالدينار", iqd, "IQD"],
@@ -341,8 +322,7 @@ export default function NewTransfer() {
             1,480 دينار = 60,000 تومان. القيم الثلاث بدائل لنفس المبلغ وليست
             مبالغ تُجمع.
           </p>
-        </Section>
-        <Section title="الرصيد" icon="wallet" step="04">
+        </details></Section><details className="transfer-optional"><summary>عرض الأرصدة التجريبية</summary><Section title="الرصيد" icon="wallet" step="04">
           <div className="transfer-balances">
             {[
               ["رصيد سابق بالدولار", transferMock.previousUSD, "USD"],
@@ -367,7 +347,7 @@ export default function NewTransfer() {
             بصورة مستقلة. الحفظ لا يغيّر أي رصيد.
           </p>
         </Section>
-        <Section title="تفاصيل إضافية" icon="layers" step="05">
+        </details><Section title="تفاصيل إضافية" icon="layers" step="05">
           <div className="transfer-fields additional-fields">
             {field("voucher", "رقم الصك أو القسيمة", {
               placeholder: "اختياري",
@@ -438,7 +418,7 @@ export default function NewTransfer() {
           <div>
             <h2 id="receipt-title">معاينة إيصال الحوالة</h2>
             <p>
-              نظام الصيرفة والحوالات · نسخة تجريبية غير صالحة للتعامل المالي
+              أعمال المستقبل · نسخة تجريبية غير صالحة للتعامل المالي
             </p>
           </div>
         </div>
@@ -453,7 +433,7 @@ export default function NewTransfer() {
             ["هاتف المستفيد", values.recipientPhone],
             ["عنوان المستفيد", values.recipientAddress],
             ["المبلغ", `${number(amount)} ${values.currency}`],
-            ["النسبة", `${values.rate}%`],
+
             ["العمولة", `${number(commission)} ${values.currency}`],
             ["نسبة الشركة", `${values.companyRate}%`],
             [
@@ -496,3 +476,5 @@ export default function NewTransfer() {
     </div>
   );
 }
+
+

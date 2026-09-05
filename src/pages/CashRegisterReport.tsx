@@ -1,3 +1,4 @@
+import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/ui";
@@ -34,6 +35,7 @@ export default function CashRegisterReport({
 }: {
   movements?: boolean;
 }) {
+  const [expanded,setExpanded]=useState(false); const reduced=useReducedMotion();
   const [filters, setFilters] = useState({ ...empty });
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState("");
@@ -194,6 +196,8 @@ export default function CashRegisterReport({
         المحفوظة إلى هذا السجل. الحركات المعلقة والملغاة لا تُحتسب في الداخل
         والخارج أو الرصيد.
       </p>
+      {movements && <button className="tl-button primary" aria-expanded={expanded} aria-controls="cash-movement-ledger" onClick={()=>{setExpanded(!expanded);setSelected("");}}>سجل حركة الصندوق {expanded ? "−" : "+"}</button>}
+      <AnimatePresence initial={false}>{(!movements || expanded) && <motion.div id={movements ? "cash-movement-ledger" : undefined} key="ledger" initial={movements && !reduced ? {height:0,opacity:0}:false} animate={{height:"auto",opacity:1}} exit={reduced ? {opacity:0}:{height:0,opacity:0}} transition={{duration:reduced ? 0 : .18}} style={movements ? {overflow:"hidden"}:undefined}>
       <form
         className="panel tl-filters"
         onSubmit={(e) => {
@@ -507,6 +511,6 @@ export default function CashRegisterReport({
           )}
         </FinanceModal>
       )}
-    </div>
+    </motion.div>}</AnimatePresence></div>
   );
 }

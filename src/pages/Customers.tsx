@@ -1,10 +1,11 @@
+import CustomerForm from '../components/CustomerForm';
 import { useEffect, useRef, useState } from "react";
-import type { FormEvent } from "react";
+
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/ui";
 import Icon from "../components/Icon";
 import {
-  saveCustomer,
+
   toggleCustomer,
   useCustomers,
 } from "../data/customerRecords";
@@ -44,13 +45,6 @@ function CustomerModal({
   close: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
-  const [draft, setDraft] = useState({
-    name: customer?.name || "",
-    phone: customer?.phone || "",
-    address: customer?.address || "",
-    notes: customer?.notes || "",
-  });
-  const [error, setError] = useState("");
   useEffect(() => {
     const d = ref.current;
     d?.showModal();
@@ -63,23 +57,6 @@ function CustomerModal({
     statement: "كشف حساب العميل",
     disable: customer?.active ? "تعطيل تجريبي" : "تفعيل تجريبي",
   };
-  function submit(e: FormEvent) {
-    e.preventDefault();
-    if (!draft.name.trim()) {
-      setError("اسم العميل مطلوب.");
-      return;
-    }
-    if (draft.phone.trim() && !/^[+\d\s()-]{7,20}$/.test(draft.phone.trim())) {
-      setError("أدخل رقم هاتف من 7 إلى 20 حرفًا، أو اتركه فارغًا.");
-      return;
-    }
-    saveCustomer(customer?.id || null, {
-      ...draft,
-      name: draft.name.trim(),
-      phone: draft.phone.trim(),
-    });
-    close();
-  }
   return (
     <dialog
       className="tl-modal customer-modal"
@@ -100,53 +77,7 @@ function CustomerModal({
         بيانات Mock مؤقتة؛ تُفقد التعديلات عند تحديث المتصفح.
       </p>
       {action === "add" || action === "edit" ? (
-        <form noValidate onSubmit={submit}>
-          <div className="tl-edit-grid">
-            {(["name", "phone", "address", "notes"] as const).map((key, i) => (
-              <label className="tl-field" key={key}>
-                <span>
-                  {["الاسم", "الهاتف", "العنوان", "ملاحظات"][i]}
-                  {key === "name" ? " *" : ""}
-                </span>
-                {key === "notes" ? (
-                  <textarea
-                    aria-label="ملاحظات"
-                    rows={3}
-                    maxLength={1000}
-                    value={draft[key]}
-                    onChange={(e) =>
-                      setDraft((d) => ({ ...d, [key]: e.target.value }))
-                    }
-                  />
-                ) : (
-                  <input
-                    aria-label={["الاسم", "الهاتف", "العنوان"][i]}
-                    type={key === "phone" ? "tel" : "text"}
-                    required={key === "name"}
-                    maxLength={key === "phone" ? 20 : 160}
-                    value={draft[key]}
-                    onChange={(e) =>
-                      setDraft((d) => ({ ...d, [key]: e.target.value }))
-                    }
-                  />
-                )}
-              </label>
-            ))}
-          </div>
-          {error && (
-            <p className="tl-error" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="tl-modal-actions">
-            <button className="tl-button primary" type="submit">
-              حفظ العميل
-            </button>
-            <button className="tl-button" type="button" onClick={close}>
-              إلغاء
-            </button>
-          </div>
-        </form>
+        <CustomerForm customer={customer} onSaved={close} onCancel={close}/>
       ) : (
         customer && (
           <>
@@ -250,9 +181,9 @@ export default function Customers({
   const currencies = [
     ...new Set(customers.flatMap((c) => Object.keys(c.balances))),
   ];
-  const rows = customers.filter(
+  const rows = [...customers].sort((a,b)=>a.name.localeCompare(b.name,"ar")||a.id.localeCompare(b.id)).filter(
     (c) =>
-      c.name.includes(filters.name.trim()) &&
+      (balances ? `${c.name} ${c.phone} ${c.id}`.toLowerCase().includes(filters.name.trim().toLowerCase()) : c.name.includes(filters.name.trim())) &&
       c.phone.includes(filters.phone.trim()) &&
       c.id.toLowerCase().includes(filters.id.trim().toLowerCase()) &&
       (!filters.status || (filters.status === "active") === c.active) &&
@@ -318,14 +249,15 @@ export default function Customers({
     ? [
         "كود العميل",
         "اسم العميل",
+        "الهاتف",
         "رصيد الدولار",
         "رصيد الدينار",
         "رصيد العملات الأخرى",
         "نوع الرصيد",
-        "آخر تحديث",
+
         "عرض كشف الحساب",
       ]
-    : [
+    : ["التسلسل",
         "كود العميل",
         "الاسم",
         "الهاتف",
@@ -367,7 +299,7 @@ export default function Customers({
       <div className="panel tl-filters">
         <div className="tl-filter-grid">
           {(balances
-            ? ([["name", "اسم العميل"]] as const)
+            ? ([["name", "بحث بالاسم أو الهاتف أو كود العميل"]] as const)
             : ([
                 ["name", "بحث بالاسم"],
                 ["phone", "الهاتف"],
@@ -383,49 +315,7 @@ export default function Customers({
               />
             </label>
           ))}
-          {balances ? (
-            <>
-              {(
-                [
-                  ["currency", "العملة", currencies.map((c) => [c, c])],
-                  [
-                    "type",
-                    "نوع الرصيد",
-                    [
-                      ["مدين", "مدين"],
-                      ["دائن", "دائن"],
-                      ["متعادل", "متعادل"],
-                    ],
-                  ],
-                  [
-                    "hasBalance",
-                    "له رصيد / بدون رصيد",
-                    [
-                      ["yes", "له رصيد"],
-                      ["no", "بدون رصيد"],
-                    ],
-                  ],
-                ] as const
-              ).map(([key, label, options]) => (
-                <label className="tl-field" key={key}>
-                  <span>{label}</span>
-                  <select
-                    aria-label={label}
-                    value={filters[key]}
-                    onChange={(e) => change(key, e.target.value)}
-                  >
-                    <option value="">الكل</option>
-                    {options.map(([value, text]) => (
-                      <option key={value} value={value}>
-                        {text}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ))}
-            </>
-          ) : (
-            <label className="tl-field">
+          {balances ? null : (<label className="tl-field">
               <span>الحالة</span>
               <select
                 aria-label="الحالة"
@@ -460,31 +350,7 @@ export default function Customers({
         </div>
       </div>
       <div className="tl-stats">
-        {(balances
-          ? [
-              [
-                "إجمالي أرصدة الدولار",
-                !filters.currency || filters.currency === "USD"
-                  ? `${number(rows.reduce((s, c) => s + (c.balances.USD || 0), 0))} USD`
-                  : "—",
-              ],
-              [
-                "إجمالي أرصدة الدينار",
-                !filters.currency || filters.currency === "IQD"
-                  ? `${number(rows.reduce((s, c) => s + (c.balances.IQD || 0), 0))} IQD`
-                  : "—",
-              ],
-              [
-                "عدد العملاء المدينين",
-                rows.filter((c) => balanceType(c, filters.currency) === "مدين")
-                  .length,
-              ],
-              [
-                "عدد العملاء الدائنين",
-                rows.filter((c) => balanceType(c, filters.currency) === "دائن")
-                  .length,
-              ],
-            ]
+        {(balances ? currencies.map(code=>["إجمالي "+code, `${number(rows.reduce((sum,c)=>sum+(c.balances[code]||0),0))} ${code}`])
           : [
               ["إجمالي العملاء", rows.length],
               ["العملاء النشطون", rows.filter((c) => c.active).length],
@@ -511,7 +377,7 @@ export default function Customers({
       <p className="tl-summary-note">
         الإحصائيات حسب الفلاتر.{" "}
         {balances
-          ? "تصفية العملة تعرض رصيدها فقط؛ الإجماليات صافية وموقعة لكل عملة بصورة مستقلة."
+          ? "الإجماليات حسب نتائج البحث، وكل عملة مستقلة."
           : ""}
       </p>
       <section className="panel tl-results">
@@ -542,13 +408,11 @@ export default function Customers({
                   </tr>
                 </thead>
                 <tbody>
-                  {visible.map((c) => (
-                    <tr key={c.id}>
+                  {visible.map((c,index) => (
+                    <tr key={c.id}>{!balances&&<td>{(current-1)*5+index+1}</td>}
                       <td dir="ltr">{c.id}</td>
                       <td>{c.name}</td>
-                      {balances ? (
-                        <>
-                          <td>{amount(c, "USD")}</td>
+                      {balances ? (<><td dir="ltr">{c.phone||"—"}</td><td>{amount(c, "USD")}</td>
                           <td>{amount(c, "IQD")}</td>
                           <td>{others(c)}</td>
                           <td>
@@ -558,7 +422,7 @@ export default function Customers({
                               {balanceType(c, filters.currency)}
                             </span>
                           </td>
-                          <td>{c.updated}</td>
+
                         </>
                       ) : (
                         <>
@@ -583,13 +447,13 @@ export default function Customers({
               </table>
             </div>
             <div className="tl-mobile-cards">
-              {visible.map((c) => (
+              {visible.map((c,index) => (
                 <article className="tl-mobile-card" key={c.id}>
                   <header>
-                    <b>{c.name}</b>
+                    <b>{!balances&&<span className="count-badge">{(current-1)*5+index+1}</span>} {c.name}</b>
                     <span dir="ltr">{c.id}</span>
                   </header>
-                  <dl>
+                  <dl>{balances&&<div><dt>الهاتف</dt><dd dir="ltr">{c.phone||"—"}</dd></div>}
                     {!balances && (
                       <>
                         <div>
@@ -632,10 +496,7 @@ export default function Customers({
                         </div>
                       </>
                     )}
-                    <div>
-                      <dt>{balances ? "آخر تحديث" : "آخر حركة"}</dt>
-                      <dd>{balances ? c.updated : c.lastActivity}</dd>
-                    </div>
+                    {!balances&&<div><dt>آخر حركة</dt><dd>{c.lastActivity}</dd></div>}
                   </dl>
                   {actions(c)}
                 </article>
@@ -674,3 +535,6 @@ export default function Customers({
     </div>
   );
 }
+
+
+

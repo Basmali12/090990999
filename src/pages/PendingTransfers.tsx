@@ -1,3 +1,4 @@
+import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader } from "../components/ui";
@@ -32,6 +33,7 @@ function waiting(row: TransferRecord) {
     : `${hours} ساعة`;
 }
 export default function PendingTransfers() {
+  const [expanded,setExpanded]=useState(false);const reduced=useReducedMotion();
   const records = useTransferRecords();
   const [filters, setFilters] = useState({ ...empty });
   const [selected, setSelected] = useState<{
@@ -101,6 +103,7 @@ export default function PendingTransfers() {
         بيانات محلية مؤقتة فقط. مدة الانتظار محسوبة حتى {demoDay}، الساعة 18:00
         بتوقيت بغداد، كتاريخ تجريبي ثابت.
       </p>
+      <button className="tl-button primary" aria-expanded={expanded} aria-controls="pending-list" onClick={()=>{setExpanded(!expanded);setSelected(null);}}>الحوالات غير المستلمة / المعلقة {expanded?"−":"+"}</button><AnimatePresence initial={false}>{expanded&&<motion.div id="pending-list" initial={reduced?false:{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={reduced?{opacity:0}:{height:0,opacity:0}} transition={{duration:reduced?0:.18}} style={{overflow:"hidden"}}>
       <div className="panel tl-filters">
         <div className="tl-filter-grid">
           {(
@@ -336,6 +339,6 @@ export default function PendingTransfers() {
           close={() => setSelected(null)}
         />
       )}
-    </div>
+    </motion.div>}</AnimatePresence></div>
   );
 }

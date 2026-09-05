@@ -1,3 +1,4 @@
+import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
 import { Link } from "react-router-dom";
@@ -306,6 +307,7 @@ export function RecordModal({
 }
 export default function TransferList({ mode }: { mode: Mode }) {
   const records = useTransferRecords();
+  const [expanded,setExpanded]=useState(false); const reduced=useReducedMotion();
   const search = mode === "search";
   const incoming = mode === "incoming";
   const [filters, setFilters] = useState<Filters>({ ...emptyFilters });
@@ -334,7 +336,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
     ? []
     : source.filter(
         (r) =>
-          includes(`${r.id} ${r.sender} ${r.recipient}`, filters.quick) &&
+          includes(`${r.id} ${r.sender} ${r.recipient} ${r.senderPhone} ${r.recipientPhone}`, filters.quick) &&
           includes(r.id, filters.id) &&
           includes(r.sender, filters.sender) &&
           includes(r.recipient, filters.recipient) &&
@@ -570,6 +572,8 @@ export default function TransferList({ mode }: { mode: Mode }) {
         محاكاة محلية · اليوم التجريبي: {demoDay} · التعديلات مشتركة بين هذه
         الصفحات وتُفقد عند تحديث المتصفح. لا توجد حركات مالية فعلية.
       </p>
+      {!search && <div className="panel tl-filters">{input("quick","بحث سريع بالاسم أو رقم الحوالة أو الهاتف")}<button type="button" className="tl-button primary" aria-expanded={expanded} aria-controls="transfer-ledger" onClick={()=>{setExpanded(!expanded);setSelected(null);}}>سجل الحوالات {incoming ? "الواردة" : "الصادرة"} {expanded ? "−" : "+"}</button></div>}
+      <AnimatePresence initial={false}>{(search || expanded) && <motion.div key="ledger" id={search ? undefined : "transfer-ledger"} initial={!search&&!reduced?{height:0,opacity:0}:false} animate={{height:"auto",opacity:1}} exit={reduced?{opacity:0}:{height:0,opacity:0}} transition={{duration:reduced?0:.18}} style={!search?{overflow:"hidden"}:undefined}>
       <form
         className="panel tl-filters"
         onSubmit={(e) => {
@@ -592,7 +596,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
               ])}
             </>
           ) : (
-            input("quick", "بحث سريع بالاسم أو رقم الحوالة")
+            null
           )}
           {input("from", "من تاريخ", "date")}
           {input("to", "إلى تاريخ", "date")}
@@ -845,8 +849,6 @@ export default function TransferList({ mode }: { mode: Mode }) {
           }}
         />
       )}
-    </div>
+    </motion.div>}</AnimatePresence></div>
   );
 }
-
-

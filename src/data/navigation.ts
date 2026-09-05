@@ -30,7 +30,6 @@ export const groups = [
       ["إضافة عميل", "/customers/new"],
       ["أرصدة العملاء", "/customers/balances"],
       ["كشف حساب عميل", "/customers/statement"],
-      ["حركة العملاء", "/customers/movements"],
     ],
   },
   {
@@ -103,3 +102,4 @@ export const pages = groups.flatMap((group) =>
     description: `واجهة ${title} ضمن قسم ${group.label}، لمتابعة وتنظيم أعمال المكتب.`,
   })),
 );
+

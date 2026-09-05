@@ -57,11 +57,11 @@ export default function InstallPrompt() {
   if (!visible) return null;
   return <dialog ref={dialog} className="install-prompt" aria-labelledby="install-title" aria-describedby="install-description" onCancel={event => { event.preventDefault(); dismiss(); }}>
     <button className="install-close" onClick={dismiss} aria-label="إغلاق وتخطي">×</button>
-    <img className="install-art" src={`${import.meta.env.BASE_URL}install-art.jpg`} alt="شعار نظام الصيرفة والحوالات" width="768" height="768" />
+    <img className="install-art" src={`${import.meta.env.BASE_URL}install-art.jpg`} alt="شعار أعمال المستقبل" width="768" height="768" />
     <div className="install-content">
       <span className="install-eyebrow">مساحة عملك… أقرب إليك</span>
-      <h2 id="install-title">الصيرفة، بلمسة واحدة</h2>
-      <p id="install-description">أضف نظام الصيرفة والحوالات إلى جهازك، وافتحه بسهولة من الشاشة الرئيسية.</p>
+      <h2 id="install-title">أعمال المستقبل، بلمسة واحدة</h2>
+      <p id="install-description">أضف أعمال المستقبل إلى جهازك، وافتحه بسهولة من الشاشة الرئيسية.</p>
       <div className="install-features"><span>وصول سريع</span><span>نافذة مستقلة</span><span>تثبيت اختياري</span></div>
       {help && <div className="install-help" role="status">
         <strong>طريقة التثبيت من المتصفح</strong>

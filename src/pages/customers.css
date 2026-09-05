@@ -1,0 +1,91 @@
+.customers-page {
+  min-width: 0;
+}
+.customers-page .tl-results {
+  margin-top: 16px;
+}
+.customer-balance {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  align-items: baseline;
+  max-width: 100%;
+}
+.customer-balance b {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.customer-balance small,
+.customer-muted {
+  color: var(--muted);
+}
+.customer-type {
+  display: inline-block;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-size: 11px;
+}
+.customer-balance.debtor,
+.customer-type.debtor {
+  color: #d69b8c;
+}
+.customer-balance.creditor,
+.customer-type.creditor {
+  color: var(--accent);
+}
+.customer-type.debtor {
+  background: #d69b8c12;
+}
+.customer-type.creditor {
+  background: var(--accent-bg);
+}
+.customer-balance.neutral,
+.customer-type.neutral {
+  color: var(--muted);
+}
+.customer-stat-value {
+  font-size: 24px;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+.customer-statement {
+  display: grid;
+  gap: 12px;
+}
+.customer-statement article {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--bg);
+}
+.customer-statement article > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+.customer-statement article > small {
+  display: block;
+  color: var(--muted);
+  margin: 10px 0;
+}
+.customer-statement .customer-balance b {
+  font-size: 23px;
+}
+.customer-modal form .tl-field:last-child {
+  grid-column: 1/-1;
+}
+@media (max-width: 767px) {
+  .customer-stat-value {
+    font-size: 20px;
+  }
+  .customers-page .tl-mobile-card header > b {
+    font-size: 13px;
+  }
+  .customers-page .tl-mobile-card dl > div {
+    grid-template-columns: 85px minmax(0, 1fr);
+  }
+  .customers-page .tl-mobile-card dd {
+    min-width: 0;
+  }
+}

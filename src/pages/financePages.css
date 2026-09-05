@@ -1,0 +1,128 @@
+.finance-page {
+  min-width: 0;
+}
+.finance-info,
+.finance-results {
+  margin-top: 18px;
+}
+.finance-info {
+  padding: 20px;
+}
+.finance-info .tl-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+.finance-info .tl-details > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+.finance-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 20px;
+  border-top: 1px solid var(--border);
+}
+.finance-summary article {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.finance-summary small {
+  color: var(--muted);
+}
+.finance-summary b {
+  font-size: 20px;
+  overflow-wrap: anywhere;
+  text-align: right;
+  color: var(--accent);
+}
+.finance-page .tl-mobile-card dd {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.finance-page .tl-mobile-card dl > div {
+  grid-template-columns: 95px minmax(0, 1fr);
+}
+@media (max-width: 1199px) {
+  .finance-info .tl-details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 767px) {
+  .finance-info .tl-details,
+  .finance-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .finance-info {
+    padding: 16px;
+  }
+  .finance-page .tl-field input,
+  .finance-page .tl-field select {
+    font-size: 16px;
+  }
+}
+@media print {
+  body:has(.statement-page) {
+    background: white !important;
+    color: #111 !important;
+  }
+  body:has(.statement-page) .sidebar,
+  body:has(.statement-page) .topbar,
+  body:has(.statement-page) .skip-link,
+  .statement-page .tl-filters,
+  .statement-page .breadcrumb {
+    display: none !important;
+  }
+  body:has(.statement-page) .main-shell {
+    margin: 0;
+  }
+  body:has(.statement-page) main {
+    padding: 0;
+  }
+  .statement-page .panel {
+    background: white;
+    color: #111;
+    border-color: #ccc;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .statement-page .tl-table-scroll {
+    display: block;
+    overflow: visible;
+  }
+  .statement-page .tl-table-scroll table {
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+  }
+  .statement-page .tl-table-scroll th,
+  .statement-page .tl-table-scroll td {
+    padding: 6px;
+    font-size: 8px;
+    background: white;
+    color: #111;
+    overflow-wrap: anywhere;
+  }
+  .statement-page .tl-mobile-cards {
+    display: none;
+  }
+  .statement-page .finance-info .tl-details {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .statement-page .finance-summary {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .statement-page .finance-summary b,
+  .statement-page .tl-details dt {
+    color: #111;
+  }
+  .statement-page tr {
+    break-inside: avoid;
+  }
+}

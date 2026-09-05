@@ -1,0 +1,61 @@
+.pf-stat {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+  font-variant-numeric: tabular-nums;
+}
+.pf-movement-cards {
+  display: grid;
+  gap: 12px;
+}
+.pf-movement-cards .tl-details {
+  margin: 10px 0;
+}
+.pf-print-receipt {
+  overflow-wrap: anywhere;
+}
+@media print {
+  body:has(.pf-print-receipt) {
+    background: white !important;
+    color: #111 !important;
+  }
+  body:has(.pf-print-receipt) .sidebar,
+  body:has(.pf-print-receipt) .topbar,
+  body:has(.pf-print-receipt) .skip-link {
+    display: none !important;
+  }
+  body:has(.pf-print-receipt) .main-shell {
+    margin: 0;
+  }
+  body:has(.pf-print-receipt) main {
+    padding: 0;
+  }
+  .settlements-page:has(.pf-print-receipt) > :not(.tl-modal) {
+    display: none !important;
+  }
+  .settlements-page .tl-modal:has(.pf-print-receipt) {
+    display: block;
+    position: static;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    overflow: visible;
+    background: white;
+    color: #111;
+    border: 0;
+    margin: 0;
+    padding: 12px;
+  }
+  .settlements-page .tl-modal::backdrop,
+  .pf-no-print,
+  .settlements-page .tl-modal-heading button {
+    display: none;
+  }
+  .pf-print-receipt .tl-details > div {
+    break-inside: avoid;
+    border-color: #ccc;
+  }
+  .pf-print-receipt .tl-details dt,
+  .pf-print-receipt .tl-disclaimer {
+    color: #333;
+  }
+}

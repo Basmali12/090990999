@@ -1,0 +1,75 @@
+.register-stat {
+  font-size: 22px;
+  overflow-wrap: anywhere;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.register-recent {
+  display: grid;
+  gap: 12px;
+  margin-top: 15px;
+}
+.register-recent .tl-details {
+  margin: 10px 0;
+}
+.register-print {
+  display: none;
+}
+@media print {
+  body:has(.register-report) {
+    background: white !important;
+    color: #111 !important;
+  }
+  body:has(.register-report) .sidebar,
+  body:has(.register-report) .topbar,
+  body:has(.register-report) .skip-link {
+    display: none !important;
+  }
+  body:has(.register-report) .main-shell {
+    margin: 0;
+  }
+  body:has(.register-report) main {
+    padding: 0;
+  }
+  .register-report > :not(.register-print) {
+    display: none !important;
+  }
+  .register-print {
+    display: block;
+    color: #111;
+  }
+  .register-print .tl-table-scroll {
+    display: block;
+    overflow: visible;
+  }
+  .register-print table {
+    min-width: 0;
+    width: 100%;
+    white-space: normal;
+    table-layout: fixed;
+  }
+  .register-print th,
+  .register-print td {
+    background: white;
+    color: #111;
+    font-size: 7px;
+    padding: 4px;
+    overflow-wrap: anywhere;
+  }
+  .register-print .tl-mobile-cards {
+    display: none;
+  }
+  .register-print tr {
+    break-inside: avoid;
+  }
+  .register-print .tl-badge {
+    color: #222;
+    background: transparent;
+    font-size: 7px;
+    padding: 0;
+  }
+  .register-print > p {
+    margin: 10px 0;
+    font-size: 10px;
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "id": "./",
+  "name": "نظام الصيرفة والحوالات",
+  "short_name": "الصيرفة",
+  "description": "نظام الصيرفة والحوالات — واجهة تجريبية",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111b29",
+  "theme_color": "#111b29",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}
+  ]
+}

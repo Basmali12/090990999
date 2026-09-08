@@ -49,18 +49,6 @@ export const groups = [
     ],
   },
   {
-    label: "الإدارة",
-    icon: "settings",
-    items: [
-      ["المستخدمون", "/admin/users"],
-      ["الصلاحيات", "/admin/permissions"],
-      ["الفروع", "/admin/branches"],
-      ["العملات", "/admin/currencies"],
-      ["إعدادات النظام", "/settings"],
-      ["إعدادات الطباعة", "/settings/printing"],
-    ],
-  },
-  {
     label: "الحساب",
     icon: "user",
     items: [

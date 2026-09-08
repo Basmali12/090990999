@@ -16,7 +16,6 @@ import Customers from "../pages/Customers";
 import NewCustomer from "../pages/NewCustomer";
 import Cashbox from "../pages/Cashbox";
 import CashVoucher from "../pages/CashVoucher";
-import SystemSettingsPage from '../pages/SystemSettingsPage';
 import PeriodReport from '../pages/PeriodReport';
 import ExchangeRates from '../pages/ExchangeRates';
 import ExchangeTransferReport from '../pages/ExchangeTransferReport';
@@ -126,7 +125,7 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={<SystemSettingsPage />} /><Route path="/reports/daily" element={<PeriodReport key="daily" mode="daily" />} /><Route path="/reports/monthly" element={<PeriodReport key="monthly" mode="monthly" />} /><Route path="/reports/yearly" element={<PeriodReport key="yearly" mode="yearly" />} /><Route path="/exchange/rates" element={<ExchangeRates />} /><Route path="/exchange/history" element={<ExchangeTransferReport key="exchange" />} /><Route path="/exchange/buy" element={<ExchangeTrade key="buy" />} /><Route path="/exchange/sell" element={<ExchangeTrade key="sell" sell />} /><Route path="/cashbox" element={<Cashbox />} />
+            <Route path="/reports/daily" element={<PeriodReport key="daily" mode="daily" />} /><Route path="/reports/monthly" element={<PeriodReport key="monthly" mode="monthly" />} /><Route path="/reports/yearly" element={<PeriodReport key="yearly" mode="yearly" />} /><Route path="/exchange/rates" element={<ExchangeRates />} /><Route path="/exchange/history" element={<ExchangeTransferReport key="exchange" />} /><Route path="/exchange/buy" element={<ExchangeTrade key="buy" />} /><Route path="/exchange/sell" element={<ExchangeTrade key="sell" sell />} /><Route path="/cashbox" element={<Cashbox />} />
 
             <Route
               path="/cashbox/balances"
@@ -180,7 +179,7 @@ export default function App() {
               .filter(
                 (page) =>
                   ![
-                    "/cashbox/close-day", "/settings", "/reports/daily", "/reports/monthly", "/reports/yearly", "/reports/customers", "/reports/partners", "/reports/cashbox", "/exchange/rates", "/exchange/history", "/reports/transfers", "/exchange/buy", "/exchange/sell", "/transfers/new",
+                    "/cashbox/close-day", "/reports/daily", "/reports/monthly", "/reports/yearly", "/reports/customers", "/reports/partners", "/reports/cashbox", "/exchange/rates", "/exchange/history", "/reports/transfers", "/exchange/buy", "/exchange/sell", "/transfers/new",
                     "/transfers/pending", "/transfers/cancelled",
                     "/transfers/undelivered",
                     "/customers",

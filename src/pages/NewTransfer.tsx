@@ -1,3 +1,4 @@
+import {useCurrencies} from '../data/currencyStore';
 import { useEffect, useRef, useState } from "react";
 import type { ReactNode, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
@@ -16,10 +17,6 @@ const blank = {
   amount: "",
   currency: "",
   commission: "0",
-  companyRate: "20",
-  voucher: "",
-  reason: "",
-  notes: "",
 };
 type Values = typeof blank;
 type Errors = Partial<Record<keyof Values, string>>;
@@ -50,6 +47,7 @@ function Section({
   );
 }
 export default function NewTransfer() {
+  const currencies=useCurrencies();
   const [values, setValues] = useState<Values>({ ...blank });
   const [errors, setErrors] = useState<Errors>({});
   const [saved, setSaved] = useState(false);
@@ -65,15 +63,10 @@ export default function NewTransfer() {
   const amount = Number.isFinite(Number(values.amount))
     ? Math.min(1e12, Math.max(0, Number(values.amount)))
     : 0;
-  const currency = transferMock.currencies.find(
+  const currency = currencies.find(
     (c) => c.code === values.currency,
   );
   const commission = Number.isFinite(Number(values.commission)) ? Math.max(0, Number(values.commission)) : 0;
-  const usd = currency ? (amount + commission) / currency.perDollar : 0;
-  const iqd = usd * 1480;
-  const toman = usd * 60000;
-  const remainingUSD = transferMock.previousUSD - usd;
-  const remainingIQD = transferMock.previousIQD - iqd;
   const dateLabel = timestamp.toLocaleString("ar-IQ", {
     dateStyle: "medium",
     timeStyle: "short",
@@ -149,14 +142,6 @@ export default function NewTransfer() {
     )
       next.amount = "أدخل مبلغًا أكبر من صفر وحتى 1,000,000,000,000";
     if (!currency) next.currency = "اختر عملة الحوالة";
-    for (const key of ["companyRate"] as const)
-      if (
-        !values[key] ||
-        !Number.isFinite(Number(values[key])) ||
-        Number(values[key]) < 0 ||
-        Number(values[key]) > 100
-      )
-        next[key] = "أدخل نسبة بين 0 و100";
     if (!values.commission.trim() || !Number.isFinite(Number(values.commission)) || Number(values.commission)<0 || Number(values.commission)>1e12) next.commission="أدخل عمولة يدوية من صفر إلى تريليون";
     setErrors(next);
     const first = Object.keys(next)[0];
@@ -181,7 +166,7 @@ export default function NewTransfer() {
       setPreview(true);
   }
   function clear() {
-    setValues({ ...blank, commission: "0", companyRate: "20" });
+    setValues({ ...blank });
     setErrors({});
     setSaved(false);
     setMessage("تم مسح الحقول.");
@@ -282,7 +267,7 @@ export default function NewTransfer() {
                 }
               >
                 <option value="">اختر العملة</option>
-                {transferMock.currencies.map((c) => (
+                {currencies.map((c) => (
                   <option value={c.code} key={c.code}>
                     {c.label} · {c.code}
                   </option>
@@ -295,77 +280,6 @@ export default function NewTransfer() {
               )}
             </div>
             {field("commission", "العمولة", {type:"number",min:0,max:1e12})}
-            {field("companyRate", "نسبة الشركة (%)", {
-              type: "number",
-              min: 0,
-              max: 100,
-            })}
-
-          </div>
-          <details className="transfer-optional"><summary>عرض المبالغ التوضيحية</summary><div className="transfer-totals" aria-live="polite">
-            {[
-              ["المبلغ المطلوب بالدولار", usd, "USD"],
-              ["المبلغ المطلوب بالدينار", iqd, "IQD"],
-              ["المبلغ المطلوب بالتومان", toman, "IRT"],
-            ].map(([label, value, code]) => (
-              <div className="transfer-total" key={label}>
-                <small>{label}</small>
-                <div>
-                  <b dir="ltr">{number(Number(value))}</b>
-                  <span>{code}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="transfer-explanation">
-            حساب تجريبي: المبلغ + العمولة، ثم تحويل توضيحي على أساس 1 دولار =
-            1,480 دينار = 60,000 تومان. القيم الثلاث بدائل لنفس المبلغ وليست
-            مبالغ تُجمع.
-          </p>
-        </details></Section><details className="transfer-optional"><summary>عرض الأرصدة التجريبية</summary><Section title="الرصيد" icon="wallet" step="04">
-          <div className="transfer-balances">
-            {[
-              ["رصيد سابق بالدولار", transferMock.previousUSD, "USD"],
-              ["الرصيد المتبقي بالدولار", remainingUSD, "USD"],
-              ["رصيد سابق بالدينار", transferMock.previousIQD, "IQD"],
-              ["المتبقي بالدينار", remainingIQD, "IQD"],
-            ].map(([label, value, code], index) => (
-              <div
-                className={`balance-cell ${index % 2 ? "balance-remaining" : ""} ${Number(value) < 0 ? "negative-balance" : ""}`}
-                key={label}
-              >
-                <small>{label}</small>
-                <div>
-                  <b dir="ltr">{number(Number(value))}</b>
-                  <span>{code}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-          <p className="transfer-explanation">
-            أرصدة ثابتة للمحاكاة؛ كل رصيد متبقٍ يعرض سيناريو الخصم بهذه العملة
-            بصورة مستقلة. الحفظ لا يغيّر أي رصيد.
-          </p>
-        </Section>
-        </details><Section title="تفاصيل إضافية" icon="layers" step="05">
-          <div className="transfer-fields additional-fields">
-            {field("voucher", "رقم الصك أو القسيمة", {
-              placeholder: "اختياري",
-            })}
-            {field("reason", "سبب الحوالة", {
-              placeholder: "مثال: مصاريف عائلية",
-            })}
-            <div className="transfer-field field-wide">
-              <label htmlFor="transfer-notes">الملاحظات</label>
-              <textarea
-                id="transfer-notes"
-                value={values.notes}
-                onChange={(e) => change("notes", e.target.value)}
-                placeholder="أضف أي تفاصيل إضافية للحوالة..."
-                rows={3}
-                maxLength={1000}
-              />
-            </div>
           </div>
         </Section>
         <div
@@ -435,17 +349,10 @@ export default function NewTransfer() {
             ["المبلغ", `${number(amount)} ${values.currency}`],
 
             ["العمولة", `${number(commission)} ${values.currency}`],
-            ["نسبة الشركة", `${values.companyRate}%`],
             [
               "الإجمالي بعملة الحوالة",
               `${number(amount + commission)} ${values.currency}`,
             ],
-            ["المطلوب بالدولار", `${number(usd)} USD`],
-            ["المطلوب بالدينار", `${number(iqd)} IQD`],
-            ["المطلوب بالتومان", `${number(toman)} IRT`],
-            ["الصك أو القسيمة", values.voucher],
-            ["السبب", values.reason],
-            ["الملاحظات", values.notes],
           ].map(([label, value]) => (
             <div key={label}>
               <dt>{label}</dt>

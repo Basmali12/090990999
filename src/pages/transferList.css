@@ -463,3 +463,5 @@
     color: #333;
   }
 }
+
+.tl-status-select{min-height:44px;max-width:100%;min-width:125px;padding:8px;border:1px solid var(--border);border-radius:10px;background:var(--panel);color:var(--text);font:inherit;cursor:pointer}

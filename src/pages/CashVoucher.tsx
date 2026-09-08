@@ -1,9 +1,9 @@
+import {useCurrencies} from '../data/currencyStore';
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/ui";
 import { FinanceModal, FinanceDetails } from "../components/FinanceViews";
-import { cashboxBalances } from "../data/cashboxMock";
 import { useCustomers } from "../data/customerRecords";
 import { partnerMock } from "../data/partnerRecords";
 import "./financePages.css";
@@ -34,6 +34,7 @@ export default function CashVoucher({
 }: {
   payment?: boolean;
 }) {
+  const currencies=useCurrencies();
   const navigate = useNavigate();
   const customers = useCustomers();
   const title = payment ? "سند صرف" : "سند قبض";
@@ -48,7 +49,7 @@ export default function CashVoucher({
   const [saved, setSaved] = useState<Snapshot | null>(null);
   const [preview, setPreview] = useState(false);
   const [message, setMessage] = useState("");
-  const currencyValid = Object.hasOwn(cashboxBalances, values.currency);
+  const currencyValid = currencies.some(c=>c.code===values.currency);
   const parties =
     values.partyType === "عميل"
       ? customers.map((c) => c.name)
@@ -219,8 +220,8 @@ export default function CashVoucher({
                 }
               >
                 <option value="">اختر العملة</option>
-                {Object.keys(cashboxBalances).map((c) => (
-                  <option key={c}>{c}</option>
+                {currencies.map((c) => (
+                  <option key={c.code} value={c.code}>{c.label} · {c.code}</option>
                 ))}
               </select>
               {errors.currency && (

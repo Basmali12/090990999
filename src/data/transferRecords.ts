@@ -26,6 +26,8 @@ export const incomingStatuses = [
   "مسلمة",
   "قيد المراجعة",
   "ملغاة",
+  "معلقة",
+  "قيد المعالجة",
 ];
 export const offices = [
   "مكتب النور · بغداد",

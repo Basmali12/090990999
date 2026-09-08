@@ -1,3 +1,4 @@
+import {useCurrencies} from '../data/currencyStore';
 import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -34,6 +35,7 @@ function waiting(row: TransferRecord) {
 }
 export default function PendingTransfers() {
   const [expanded,setExpanded]=useState(false);const reduced=useReducedMotion();
+  const currencies=useCurrencies();
   const records = useTransferRecords();
   const [filters, setFilters] = useState({ ...empty });
   const [selected, setSelected] = useState<{
@@ -139,11 +141,7 @@ export default function PendingTransfers() {
               [
                 "currency",
                 "العملة",
-                [
-                  ["USD", "USD"],
-                  ["IQD", "IQD"],
-                  ["IRT", "IRT"],
-                ],
+                currencies.map(c=>[c.code,`${c.label} · ${c.code}`]),
               ],
               ["office", "المكتب/الشريك", offices.map((o) => [o, o])],
             ] as const
@@ -190,7 +188,7 @@ export default function PendingTransfers() {
         <article className="panel">
           <small>إجمالي مبالغها</small>
           <div className="tl-currency-totals">
-            {["USD", "IQD", "IRT"].map((currency) => (
+            {currencies.map(c=>c.code).map((currency) => (
               <span key={currency}>
                 <b>
                   {number(
@@ -331,6 +329,7 @@ export default function PendingTransfers() {
           </>
         )}
       </section>
+      </motion.div>}</AnimatePresence>
       {selected && record && (
         <RecordModal
           key={`${selected.id}-${selected.action}`}
@@ -339,6 +338,6 @@ export default function PendingTransfers() {
           close={() => setSelected(null)}
         />
       )}
-    </motion.div>}</AnimatePresence></div>
+    </div>
   );
 }

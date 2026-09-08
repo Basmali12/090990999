@@ -37,8 +37,5 @@ export const cashboxMovements = fixtures.map((row, index) => ({
 export const cashboxActions = [
   { title: "قبض", path: "/cashbox/receipt", icon: "down" },
   { title: "صرف", path: "/cashbox/payment", icon: "up" },
-  { title: "تحويل بين الصناديق", path: "/cashbox/transfer", icon: "transfer" },
   { title: "كشف رصيد الصندوق", path: "/cashbox/balance", icon: "wallet" },
-  { title: "حركة الصندوق", path: "/cashbox/activity", icon: "chart" },
-  { title: "إغلاق اليوم", path: "/cashbox/close-day", icon: "clock" },
 ];

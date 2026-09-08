@@ -12,7 +12,7 @@ import {
 import type { Customer } from "../data/customerRecords";
 import "./transferList.css";
 import "./customers.css";
-type CustomerAction = "view" | "edit" | "add" | "statement" | "disable";
+type CustomerAction = "view" | "edit" | "add" | "statement" | "disable" | "print" | "editFull";
 const number = (value: number) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(value);
 function balanceType(c: Customer, currency = "") {
@@ -51,15 +51,17 @@ function CustomerModal({
     return () => d?.close();
   }, []);
   const titles = {
+    print: "وصل بيانات العميل · أعمال المستقبل",
     view: "بيانات العميل",
     edit: "تعديل العميل",
+    editFull: "تعديل بيانات وأرصدة العميل",
     add: "إضافة عميل",
     statement: "كشف حساب العميل",
     disable: customer?.active ? "تعطيل تجريبي" : "تفعيل تجريبي",
   };
   return (
     <dialog
-      className="tl-modal customer-modal"
+      className={`tl-modal customer-modal ${action === "print" ? "customer-print" : ""}`}
       ref={ref}
       aria-labelledby="customer-modal-title"
       onCancel={close}
@@ -76,8 +78,8 @@ function CustomerModal({
       <p className="tl-disclaimer">
         بيانات Mock مؤقتة؛ تُفقد التعديلات عند تحديث المتصفح.
       </p>
-      {action === "add" || action === "edit" ? (
-        <CustomerForm customer={customer} onSaved={close} onCancel={close}/>
+      {action === "add" || action === "edit" || action === "editFull" ? (
+        <CustomerForm comprehensive={action === "editFull"} customer={customer} onSaved={close} onCancel={close}/>
       ) : (
         customer && (
           <>
@@ -155,6 +157,7 @@ function CustomerModal({
           </>
         )
       )}
+      {action === "print" && <div className="tl-modal-actions"><button className="tl-button primary" onClick={()=>window.print()}>طباعة الوصل</button></div>}
     </dialog>
   );
 }
@@ -227,10 +230,11 @@ export default function Customers({
     return (
       <div className="tl-row-actions">
         {(balances
-          ? ([["statement", "عرض كشف الحساب"]] as const)
+          ? ([["statement", "عرض كشف الحساب"], ["editFull", "تعديل"]] as const)
           : ([
               ["view", "عرض"],
               ["edit", "تعديل"],
+              ["print", "طباعة وصل"],
               ["statement", "كشف حساب"],
               ["disable", c.active ? "تعطيل تجريبي" : "تفعيل تجريبي"],
             ] as const)
@@ -255,7 +259,7 @@ export default function Customers({
         "رصيد العملات الأخرى",
         "نوع الرصيد",
 
-        "عرض كشف الحساب",
+        "الإجراءات",
       ]
     : ["التسلسل",
         "كود العميل",

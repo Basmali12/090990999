@@ -10,24 +10,17 @@ import Icon from "../components/Icon";
 import Dashboard from "../pages/Dashboard";
 import NewTransfer from "../pages/NewTransfer";
 import TransferList from "../pages/TransferList";
+import CancelledTransfers from '../pages/CancelledTransfers';
 import PendingTransfers from "../pages/PendingTransfers";
 import Customers from "../pages/Customers";
-import CustomerStatement from "../pages/CustomerStatement";
 import NewCustomer from "../pages/NewCustomer";
-import Partners from "../pages/Partners";
-import PartnerBalances from "../pages/PartnerBalances";
-import PartnerStatement from "../pages/PartnerStatement";
-import PartnerSettlements from "../pages/PartnerSettlements";
 import Cashbox from "../pages/Cashbox";
 import CashVoucher from "../pages/CashVoucher";
 import SystemSettingsPage from '../pages/SystemSettingsPage';
 import PeriodReport from '../pages/PeriodReport';
-import EntityFinancialReport from '../pages/EntityFinancialReport';
 import ExchangeRates from '../pages/ExchangeRates';
 import ExchangeTransferReport from '../pages/ExchangeTransferReport';
-import CloseDay from '../pages/CloseDay';
 import ExchangeTrade from '../pages/ExchangeTrade';
-import CashTransfer from "../pages/CashTransfer";
 import CashRegisterReport from "../pages/CashRegisterReport";
 import { pages } from "../data/navigation";
 function subscribeViewport(callback: () => void) {
@@ -133,24 +126,18 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/settings" element={<SystemSettingsPage />} /><Route path="/reports/daily" element={<PeriodReport key="daily" mode="daily" />} /><Route path="/reports/monthly" element={<PeriodReport key="monthly" mode="monthly" />} /><Route path="/reports/yearly" element={<PeriodReport key="yearly" mode="yearly" />} /><Route path="/reports/customers" element={<EntityFinancialReport key="customers-report" mode="customers" />} /><Route path="/reports/partners" element={<EntityFinancialReport key="partners-report" mode="partners" />} /><Route path="/reports/cashbox" element={<EntityFinancialReport key="cashbox-report" mode="cashbox" />} /><Route path="/exchange/rates" element={<ExchangeRates />} /><Route path="/exchange/history" element={<ExchangeTransferReport key="exchange" />} /><Route path="/reports/transfers" element={<ExchangeTransferReport key="transfers" transfers />} /><Route path="/cashbox/close-day" element={<CloseDay />} /><Route path="/exchange/buy" element={<ExchangeTrade key="buy" />} /><Route path="/exchange/sell" element={<ExchangeTrade key="sell" sell />} /><Route path="/cashbox" element={<Cashbox />} />
-            <Route path="/cashbox/transfer" element={<CashTransfer />} />
+            <Route path="/settings" element={<SystemSettingsPage />} /><Route path="/reports/daily" element={<PeriodReport key="daily" mode="daily" />} /><Route path="/reports/monthly" element={<PeriodReport key="monthly" mode="monthly" />} /><Route path="/reports/yearly" element={<PeriodReport key="yearly" mode="yearly" />} /><Route path="/exchange/rates" element={<ExchangeRates />} /><Route path="/exchange/history" element={<ExchangeTransferReport key="exchange" />} /><Route path="/exchange/buy" element={<ExchangeTrade key="buy" />} /><Route path="/exchange/sell" element={<ExchangeTrade key="sell" sell />} /><Route path="/cashbox" element={<Cashbox />} />
+
             <Route
               path="/cashbox/balances"
               element={<CashRegisterReport key="balances" />}
             />
-            <Route
-              path="/cashbox/movements"
-              element={<CashRegisterReport key="movements" movements />}
-            />
+
             <Route
               path="/cashbox/balance"
               element={<Navigate to="/cashbox/balances" replace />}
             />
-            <Route
-              path="/cashbox/activity"
-              element={<Navigate to="/cashbox/movements" replace />}
-            />
+
             <Route
               path="/cashbox/receipt"
               element={<CashVoucher key="receipt" />}
@@ -160,28 +147,23 @@ export default function App() {
               element={<CashVoucher key="payment" payment />}
             />
             <Route path="/transfers/new" element={<NewTransfer />} />
+            <Route path="/transfers/cancelled" element={<CancelledTransfers />} />
             <Route path="/transfers/pending" element={<PendingTransfers />} />
             <Route
               path="/transfers/undelivered"
               element={<Navigate to="/transfers/pending" replace />}
             />
             <Route path="/customers" element={<Customers key="customers" />} />
-            <Route
-              path="/customers/statement"
-              element={<CustomerStatement />}
-            />
+
             <Route path="/customers/new" element={<NewCustomer/>}/>
             <Route
               path="/customers/activity"
               element={<Navigate to="/customers" replace />}
             />
-            <Route path="/partners" element={<Partners />} />
-            <Route path="/partners/balances" element={<PartnerBalances />} />
-            <Route path="/partners/statement" element={<PartnerStatement />} />
-            <Route
-              path="/partners/settlements"
-              element={<PartnerSettlements />}
-            />
+
+
+
+
             <Route
               path="/customers/balances"
               element={<Customers key="balances" balances />}
@@ -194,16 +176,12 @@ export default function App() {
               path="/transfers/incoming"
               element={<TransferList key="incoming" mode="incoming" />}
             />
-            <Route
-              path="/transfers/search"
-              element={<TransferList key="search" mode="search" />}
-            />
             {pages
               .filter(
                 (page) =>
                   ![
                     "/cashbox/close-day", "/settings", "/reports/daily", "/reports/monthly", "/reports/yearly", "/reports/customers", "/reports/partners", "/reports/cashbox", "/exchange/rates", "/exchange/history", "/reports/transfers", "/exchange/buy", "/exchange/sell", "/transfers/new",
-                    "/transfers/pending",
+                    "/transfers/pending", "/transfers/cancelled",
                     "/transfers/undelivered",
                     "/customers",
                     "/customers/statement",
@@ -224,7 +202,6 @@ export default function App() {
                     "/customers/balances",
                     "/transfers/outgoing",
                     "/transfers/incoming",
-                    "/transfers/search",
                   ].includes(page.path),
               )
               .map((page) => (

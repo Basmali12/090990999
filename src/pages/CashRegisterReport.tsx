@@ -1,3 +1,4 @@
+import {useCurrencies} from '../data/currencyStore';
 import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useState } from "react";
 import { Link } from "react-router-dom";
@@ -35,6 +36,7 @@ export default function CashRegisterReport({
 }: {
   movements?: boolean;
 }) {
+  const currencies=useCurrencies();
   const [expanded,setExpanded]=useState(false); const reduced=useReducedMotion();
   const [filters, setFilters] = useState({ ...empty });
   const [page, setPage] = useState(1);
@@ -210,7 +212,7 @@ export default function CashRegisterReport({
           {(
             [
               ["box", "اختيار الصندوق", registers.map((b) => [b.id, b.name])],
-              ["currency", "العملة", registerCurrencies.map((c) => [c, c])],
+              ["currency", "العملة", currencies.map(c=>[c.code,`${c.label} · ${c.code}`])],
               ...(movements
                 ? [
                     ["type", "نوع الحركة", registerTypes.map((t) => [t, t])],

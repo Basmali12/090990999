@@ -1,3 +1,4 @@
+import {useCurrencies} from '../data/currencyStore';
 import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useEffect, useRef, useState } from "react";
 import type { FormEvent, ReactNode } from "react";
@@ -34,16 +35,6 @@ type Filters = typeof emptyFilters;
 const format = (n: number) =>
   new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 }).format(n);
 const dateText = (date: string) => date.replace("T", " · ");
-function Badge({ status }: { status: string }) {
-  return (
-    <span
-      className={`tl-badge ${status === "مسلمة" ? "done" : status === "ملغاة" ? "cancelled" : status.includes("انتظار") || status === "معلقة" ? "pending" : "review"}`}
-    >
-      <i />
-      {status}
-    </span>
-  );
-}
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="tl-field">
@@ -154,7 +145,7 @@ export function RecordModal({
       });
     if (action === "notes") updateTransfer(row.id, { notes: draft.notes });
     if (action === "status")
-      updateTransfer(row.id, { status: draft.status, deliveredAt: "" });
+      updateTransfer(row.id, { status: draft.status, deliveredAt: draft.status === "مسلمة" ? (row.deliveredAt || new Date().toISOString().slice(0,16)) : "" });
     if (action === "cancel") updateTransfer(row.id, { status: "ملغاة" });
     if (action === "deliver")
       updateTransfer(row.id, {
@@ -230,7 +221,6 @@ export function RecordModal({
                 ? incomingStatuses
                 : outgoingStatuses
               )
-                .filter((status) => status !== "مسلمة")
                 .map((status) => (
                   <option key={status}>{status}</option>
                 ))}
@@ -305,7 +295,13 @@ export function RecordModal({
     </dialog>
   );
 }
+export function TransferStatusSelect({row}: {row: TransferRecord}) {
+  return <select className="tl-status-select" aria-label={`حالة الحوالة ${row.id}`} value={row.status} onChange={event => updateTransfer(row.id, {status: event.target.value, deliveredAt: event.target.value === 'مسلمة' ? (row.deliveredAt || new Date().toISOString().slice(0,16)) : ''})}>
+    {(row.direction === 'incoming' ? incomingStatuses : outgoingStatuses).map(status => <option key={status}>{status}</option>)}
+  </select>;
+}
 export default function TransferList({ mode }: { mode: Mode }) {
+  const currencies=useCurrencies();
   const records = useTransferRecords();
   const [expanded,setExpanded]=useState(false); const reduced=useReducedMotion();
   const search = mode === "search";
@@ -481,7 +477,6 @@ export default function TransferList({ mode }: { mode: Mode }) {
       ? [
           "رقم الحوالة",
           "التاريخ",
-          "المكتب/الشريك المرسل",
           "اسم المرسل",
           "المستفيد",
           "المبلغ",
@@ -518,19 +513,18 @@ export default function TransferList({ mode }: { mode: Mode }) {
           amount,
           r.currency,
           r.office,
-          <Badge status={r.status} />,
+          <TransferStatusSelect row={r} />,
           actions(r),
         ]
       : incoming
         ? [
             ...common,
-            r.office,
             r.sender,
             r.recipient,
             amount,
             r.currency,
             format(r.commission),
-            <Badge status={r.status} />,
+            <TransferStatusSelect row={r} />,
             actions(r),
           ]
         : [
@@ -541,7 +535,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
             r.currency,
             format(r.commission),
             r.office,
-            <Badge status={r.status} />,
+            <TransferStatusSelect row={r} />,
             actions(r),
           ];
   }
@@ -600,8 +594,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
           )}
           {input("from", "من تاريخ", "date")}
           {input("to", "إلى تاريخ", "date")}
-          {select("currency", "العملة", ["USD", "IQD", "IRT"])}
-          {incoming && select("office", "المكتب/الشريك", offices)}
+          {select("currency", "العملة", currencies.map(c=>({value:c.code,label:`${c.label} · ${c.code}`})))}
           {select("status", "الحالة", statuses)}
         </div>
         {badDates && (
@@ -778,7 +771,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
                   <article className="tl-mobile-card" key={r.id}>
                     <header>
                       <b dir="ltr">{r.id}</b>
-                      <Badge status={r.status} />
+                      <TransferStatusSelect row={r} />
                     </header>
                     <small>
                       {r.direction === "incoming" ? "واردة" : "صادرة"} ·{" "}
@@ -790,7 +783,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
                         ["المستفيد", r.recipient],
                         ["المبلغ", `${format(r.amount)} ${r.currency}`],
                         ["العمولة", `${format(r.commission)} ${r.currency}`],
-                        ["المكتب/الشريك", r.office],
+                        ...(!incoming ? [["المكتب/الشريك", r.office]] : []),
                       ].map(([label, value]) => (
                         <div key={label}>
                           <dt>{label}</dt>
@@ -825,6 +818,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
           )}
         </section>
       )}
+      </motion.div>}</AnimatePresence>
       <section className="tl-print-list">
         <h1>{title} · نسخة تجريبية</h1>
         <p>
@@ -849,6 +843,6 @@ export default function TransferList({ mode }: { mode: Mode }) {
           }}
         />
       )}
-    </motion.div>}</AnimatePresence></div>
+    </div>
   );
 }

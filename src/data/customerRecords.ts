@@ -49,7 +49,7 @@ export function useCustomers() {
 }
 export function saveCustomer(
   id: string | null,
-  details: Pick<Customer, "name" | "phone" | "address" | "notes">,
+  details: Pick<Customer, "name" | "phone" | "address" | "notes"> & Partial<Pick<Customer, "balances" | "active">>,
 ) {
   const date = "2026-09-05";
   if (id) {

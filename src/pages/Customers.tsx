@@ -1,3 +1,5 @@
+import {mockMovements, openingBalance} from '../data/customerMovements';
+import {localDate} from '../data/localStore';
 import CustomerForm from '../components/CustomerForm';
 import { useEffect, useRef, useState } from "react";
 
@@ -44,6 +46,7 @@ function CustomerModal({
   action: CustomerAction;
   close: () => void;
 }) {
+  const movements = customer ? mockMovements([customer]) : [];
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
@@ -57,7 +60,7 @@ function CustomerModal({
     editFull: "تعديل بيانات وأرصدة العميل",
     add: "إضافة عميل",
     statement: "كشف حساب العميل",
-    disable: customer?.active ? "تعطيل تجريبي" : "تفعيل تجريبي",
+    disable: customer?.active ? "تعطيل" : "تفعيل",
   };
   return (
     <dialog
@@ -76,7 +79,7 @@ function CustomerModal({
         </button>
       </div>
       <p className="tl-disclaimer">
-        بيانات Mock مؤقتة؛ تُفقد التعديلات عند تحديث المتصفح.
+        بيانات محفوظة محليًا على هذا المتصفح. الأرصدة تشمل سندات العميل المسجلة.
       </p>
       {action === "add" || action === "edit" || action === "editFull" ? (
         <CustomerForm comprehensive={action === "editFull"} customer={customer} onSaved={close} onCancel={close}/>
@@ -87,15 +90,13 @@ function CustomerModal({
               <>
                 <p>
                   هل تريد {customer.active ? "تعطيل" : "تفعيل"} العميل «
-                  {customer.name}» تجريبيًا؟ بياناته وأرصدته ستبقى محفوظة داخل
-                  الجلسة.
+                  {customer.name}»؟ ستبقى بياناته وأرصدته محفوظة محليًا.
                 </p>
                 <div className="tl-modal-actions">
                   <button
                     className="tl-button primary"
                     onClick={() => {
-                      toggleCustomer(customer.id);
-                      close();
+                      if(toggleCustomer(customer.id))close();
                     }}
                   >
                     تأكيد {customer.active ? "التعطيل" : "التفعيل"}
@@ -126,8 +127,7 @@ function CustomerModal({
                 </dl>
                 {action === "statement" && (
                   <p className="tl-disclaimer">
-                    كشف تجريبي: الرصيد الافتتاحي أدناه يطابق رصيد العميل. لا
-                    توجد عمليات مالية فعلية أو سجل حركات مُنشأ.
+                    يعرض الكشف الأرصدة الحالية وسندات القبض والصرف المرتبطة بكود العميل.
                   </p>
                 )}
                 <div className="customer-statement">
@@ -144,14 +144,16 @@ function CustomerModal({
                         </div>
                         <small>
                           {action === "statement"
-                            ? "رصيد افتتاحي تجريبي / الرصيد الختامي"
-                            : "الرصيد التجريبي"}
+                            ? "الرصيد الحالي"
+                            : "الرصيد الحالي"}
                         </small>
                         <Balance value={value} currency={currency} />
+                        {action === "statement" && <><small>الرصيد الافتتاحي</small><Balance value={openingBalance(customer,currency,movements)} currency={currency}/><small>إجمالي المدين / الدائن</small><span dir="ltr">{number(movements.filter(m=>m.currency===currency).reduce((sum,m)=>sum+m.debit,0))} / {number(movements.filter(m=>m.currency===currency).reduce((sum,m)=>sum+m.credit,0))}</span></>}
                       </article>
                     ),
                   )}
                 </div>
+                {action === "statement" && <section className="customer-statement-movements"><h3>حركات العميل</h3>{movements.length ? movements.map(m=><article className="tl-mobile-card" key={m.id}><header><b>{m.type}</b><span dir="ltr">{m.id}</span></header><dl><div><dt>التاريخ</dt><dd>{m.date.replace('T',' ')}</dd></div><div><dt>المرجع</dt><dd>{m.reference}</dd></div><div><dt>مدين</dt><dd>{number(m.debit)} {m.currency}</dd></div><div><dt>دائن</dt><dd>{number(m.credit)} {m.currency}</dd></div><div><dt>البيان</dt><dd>{m.description||'—'}</dd></div><div><dt>ملاحظات</dt><dd>{m.notes||'—'}</dd></div></dl></article>):<p className="tl-empty">لم تُسجل حركات لهذا العميل بعد.</p>}</section>}
               </>
             )}
           </>
@@ -236,7 +238,7 @@ export default function Customers({
               ["edit", "تعديل"],
               ["print", "طباعة وصل"],
               ["statement", "كشف حساب"],
-              ["disable", c.active ? "تعطيل تجريبي" : "تفعيل تجريبي"],
+              ["disable", c.active ? "تعطيل" : "تفعيل"],
             ] as const)
         ).map(([action, label]) => (
           <button
@@ -297,7 +299,7 @@ export default function Customers({
         )}
       </PageHeader>
       <p className="tl-disclaimer">
-        محاكاة محلية فقط · الشهر التجريبي: سبتمبر 2026. الموجب: دائن (للعميل)،
+        بياناتك محفوظة محليًا. الموجب: دائن (للعميل)،
         السالب: مدين (على العميل). لا نجمع عملات مختلفة في رصيد واحد.
       </p>
       <div className="panel tl-filters">
@@ -366,7 +368,7 @@ export default function Customers({
               ],
               [
                 "عملاء جدد هذا الشهر",
-                rows.filter((c) => c.created.startsWith("2026-09")).length,
+                rows.filter((c) => c.created.startsWith(localDate().slice(0,7))).length,
               ],
             ]
         ).map(([label, value]) => (
@@ -392,8 +394,8 @@ export default function Customers({
         {!rows.length ? (
           <div className="tl-empty">
             <Icon name="users" size={35} />
-            <h2>لا يوجد عملاء مطابقون</h2>
-            <p>جرّب تغيير الفلاتر.</p>
+            <h2>{customers.length ? "لا يوجد عملاء مطابقون" : "لم تضف عملاء بعد"}</h2>
+            <p>{customers.length ? "جرّب تغيير الفلاتر." : "أضف أول عميل لبدء تسجيل بياناته وأرصدته."}</p>
           </div>
         ) : (
           <>

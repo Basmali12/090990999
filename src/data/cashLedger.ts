@@ -1,43 +1,23 @@
-import {useSyncExternalStore} from 'react';
-import {cashboxBalances as openingBalances, cashboxMovements as seedCashMovements} from './cashboxMock';
-import {registerMovements as seedRegisterMovements, registerBalanceRows as seedBalanceRows} from './cashRegistersMock';
-import type {RegisterMovement} from './cashRegistersMock';
+import {useMemo} from 'react';
+import {useLocalData,updateLocal} from './localStore';
+import type {LocalData} from './localStore';
 export type CashPosting = {
-  id:string; date:string; party:string; partyType:string; currency:string;
+  id:string; customerId?:string; date:string; party:string; partyType:string; currency:string;
   amount:number; type:'قبض'|'صرف'; reason:string; reference:string; description:string; notes:string;
 };
-const round=(value:number)=>Number(value.toFixed(6));
-let postings:CashPosting[]=[];
-function buildSnapshot(){
-  let balances:Record<string,number>={...openingBalances};
-  const added=postings.map(posting=>{
-    const incoming=posting.type==='قبض';
-    const previous=Object.hasOwn(balances,posting.currency)?balances[posting.currency]:0;
-    const balance=round(previous+(incoming?posting.amount:-posting.amount));
-    balances={...balances,[posting.currency]:balance};
-    return {...posting,reference:posting.reference||posting.id,description:posting.description||posting.reason||`${posting.type} من/إلى ${posting.party}`,incoming,balance,user:'أحمد محمد · مستخدم تجريبي'};
-  });
-  const cashboxMovements=[...seedCashMovements.map(m=>({...m,party:'طرف تجريبي',partyType:'أخرى',reason:'',notes:''})),...added];
-  const registerMovements:RegisterMovement[]=[...seedRegisterMovements,...added.map(m=>({...m,box:'main',incoming:m.incoming?m.amount:0,outgoing:m.incoming?0:m.amount,status:'مكتملة'}))];
-  const mainRows=Object.entries(balances).map(([currency,current])=>{
-    const baseline=seedBalanceRows.find(r=>r.box==='main'&&r.currency===currency);
-    const moves=registerMovements.filter(m=>m.box==='main'&&m.currency===currency);
-    return {id:`main-${currency}`,box:'main',name:'الصندوق الرئيسي',branch:'بغداد',currency,
-      opening:baseline?.opening??0,incoming:round(moves.reduce((sum,m)=>sum+m.incoming,0)),outgoing:round(moves.reduce((sum,m)=>sum+m.outgoing,0)),current,
-      last:moves.at(-1)?.date||'—',updated:added.filter(m=>m.currency===currency).at(-1)?.date||baseline?.updated||'—'};
-  });
-  return {cashboxBalances:balances,cashboxMovements,registerMovements,registerBalanceRows:[...mainRows,...seedBalanceRows.filter(r=>r.box!=='main')]};
+
+const round=(v:number)=>Number(v.toFixed(6));
+export function buildCashLedger(data:LocalData){
+ const balances:Record<string,number>={USD:0,IQD:0};
+ for(const r of data.rates){balances[r.base]??=0;balances[r.counter]??=0;}
+ const legs=[...data.cash.map(p=>({...p,signed:p.type==='قبض'?p.amount:-p.amount})),...data.exchange.filter(r=>r.status==='مكتملة').flatMap(r=>{const sell=r.type==='بيع';const common={date:r.date,party:r.party,partyType:'أخرى',type:r.type+' عملة',reason:'',reference:r.id,description:r.description,notes:r.notes};return [{...common,id:r.id+'-base',currency:r.currency,amount:r.amount,signed:sell?-r.amount:r.amount},{...common,id:r.id+'-counter',currency:r.counter,amount:r.counterpart+(sell?r.commission:-r.commission),signed:sell?r.counterpart+r.commission:-(r.counterpart-r.commission)}];})].sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
+ const cashboxMovements=legs.map(p=>{balances[p.currency]=round((balances[p.currency]??0)+p.signed);return {...p,incoming:p.signed>=0,balance:balances[p.currency],reference:p.reference||p.id,description:p.description||p.reason||p.type,user:'المستخدم المحلي'};});
+ const registerMovements=cashboxMovements.map(m=>({...m,box:'main',incoming:m.incoming?m.amount:0,outgoing:m.incoming?0:m.amount,status:'مكتملة'}));
+ const registerBalanceRows=Object.entries(balances).map(([currency,current])=>{const moves=registerMovements.filter(m=>m.currency===currency);return {id:'main-'+currency,box:'main',name:'الصندوق الرئيسي',branch:'الصندوق الرئيسي',currency,opening:0,incoming:round(moves.reduce((s,m)=>s+m.incoming,0)),outgoing:round(moves.reduce((s,m)=>s+m.outgoing,0)),current,last:moves.at(-1)?.date||'—',updated:moves.at(-1)?.date||'—'};});
+ return {cashboxBalances:balances,cashboxMovements,registerMovements,registerBalanceRows};
 }
-let snapshot=buildSnapshot();
-const listeners=new Set<()=>void>();
-function subscribe(listener:()=>void){listeners.add(listener);return()=>{listeners.delete(listener);};}
-export function useCashLedger(){return useSyncExternalStore(subscribe,()=>snapshot);}
+export function useCashLedger(){const data=useLocalData();return useMemo(()=>buildCashLedger(data),[data]);}
 export function postCashVoucher(posting:CashPosting){
-  if(!posting.id||!posting.party.trim()||!posting.currency||!Number.isFinite(posting.amount)||posting.amount<=0||posting.amount>1e12||!Number.isFinite(Date.parse(posting.date)))throw new Error('بيانات السند غير صالحة للحفظ.');
-  const existing=postings.find(p=>p.id===posting.id);
-  const next={...posting,date:existing?.date||posting.date};
-  if(existing&&JSON.stringify(existing)===JSON.stringify(next))return;
-  postings=existing?postings.map(p=>p.id===next.id?next:p):[...postings,next];
-  snapshot=buildSnapshot();
-  listeners.forEach(listener=>listener());
+ if(!posting.id||!posting.party.trim()||!posting.currency||!Number.isFinite(posting.amount)||posting.amount<=0||posting.amount>1e12||!Number.isFinite(Date.parse(posting.date)))throw Error('بيانات السند غير صالحة للحفظ.');
+ if(!updateLocal(data=>({...data,cash:data.cash.some(p=>p.id===posting.id)?data.cash.map(p=>p.id===posting.id?{...posting,date:p.date}:p):[...data.cash,posting]})))throw Error('لم يتم حفظ السند. تحقق من مساحة التخزين المحلية.');
 }

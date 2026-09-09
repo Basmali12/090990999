@@ -1,3 +1,4 @@
+import {useLocalData,localError} from '../data/localStore';
 import UpdateNotification from '../updates/UpdateNotification';
 import {PageTransition} from '../components/premium/MotionUI';
 import PremiumRuntime from '../components/premium/PremiumRuntime';
@@ -43,6 +44,7 @@ function readTheme() {
   }
 }
 export default function App() {
+  useLocalData();
   const [theme, setTheme] = useState(readTheme);
   const mode = useSyncExternalStore(subscribeViewport, viewportMode);
   const [collapsePreference, setCollapsed] = useState<boolean | null>(null);
@@ -51,7 +53,7 @@ export default function App() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const drawer = useRef<HTMLDialogElement>(null);
   const showDrawer = mode === "mobile" && drawerOpen;
-  const { pathname } = useLocation();
+  const { pathname, search } = useLocation();
   useEffect(() => {
     const mobileViewport = window.matchMedia("(max-width: 767px)");
     const closeOnBreakpointChange = () => setDrawerOpen(false);
@@ -121,6 +123,7 @@ export default function App() {
           }
         />
         <UpdateNotification />
+        {localError()&&<p className="tl-error" role="alert">{localError()}</p>}
         <PageTransition key={pathname} id="main-content">
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -145,7 +148,7 @@ export default function App() {
               path="/cashbox/payment"
               element={<CashVoucher key="payment" payment />}
             />
-            <Route path="/transfers/new" element={<NewTransfer />} />
+            <Route path="/transfers/new" element={<NewTransfer key={search} />} />
             <Route path="/transfers/cancelled" element={<CancelledTransfers />} />
             <Route path="/transfers/pending" element={<PendingTransfers />} />
             <Route

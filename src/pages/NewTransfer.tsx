@@ -4,7 +4,9 @@ import type { ReactNode, FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import Icon from "../components/Icon";
 import { PageHeader, StatusBadge } from "../components/ui";
-import { transferMock } from "../data/transferMock";
+import {saveTransfer} from '../data/transferRecords';
+import {localDate} from '../data/localStore';
+import {useSearchParams} from 'react-router-dom';
 import "./newTransfer.css";
 
 const blank = {
@@ -48,6 +50,8 @@ function Section({
 }
 export default function NewTransfer() {
   const currencies=useCurrencies();
+  const [query]=useSearchParams();const incoming=query.get('direction')==='incoming';
+  const [transferId,setTransferId]=useState(()=>`${incoming?'IN':'OUT'}-${crypto.randomUUID().slice(0,8)}`);
   const [values, setValues] = useState<Values>({ ...blank });
   const [errors, setErrors] = useState<Errors>({});
   const [saved, setSaved] = useState(false);
@@ -155,9 +159,10 @@ export default function NewTransfer() {
   function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!validate()) return;
+    if(!saveTransfer({...values,id:transferId,direction:incoming?'incoming':'outgoing',date:localDate(),amount,commission,office:'',status:incoming?'بانتظار التسليم':'معلقة',notes:'',reason:'',voucher:'',deliveredAt:''}))return;
     setSaved(true);
     setMessage(
-      "تم حفظ النسخة التجريبية في ذاكرة هذه الصفحة فقط. لا يتم إرسال حوالة فعلية، وتُفقد البيانات عند المغادرة أو التحديث.",
+      "تم حفظ الحوالة في السجل المحلي. لا يُحرّك تسجيل الحوالة النقد؛ سجّل القبض أو الصرف بسند عند استلام أو تسليم النقد.",
     );
     if (
       (event.nativeEvent as SubmitEvent).submitter?.getAttribute("value") ===
@@ -166,6 +171,7 @@ export default function NewTransfer() {
       setPreview(true);
   }
   function clear() {
+    setTransferId(`${incoming?'IN':'OUT'}-${crypto.randomUUID().slice(0,8)}`);
     setValues({ ...blank });
     setErrors({});
     setSaved(false);
@@ -183,8 +189,8 @@ export default function NewTransfer() {
         <b>إرسال حوالة جديدة</b>
       </nav>
       <PageHeader
-        title="إرسال حوالة جديدة"
-        description="أدخل بيانات الحوالة وراجع الملخص قبل حفظ النسخة التجريبية."
+        title={incoming?"تسجيل حوالة واردة":"إرسال حوالة جديدة"}
+        description="أدخل بيانات الحوالة وراجع الملخص قبل حفظ النسخة المحلية."
       >
         <span className="page-icon">
           <Icon name="transfer" size={25} />
@@ -192,8 +198,8 @@ export default function NewTransfer() {
       </PageHeader>
       <div className="transfer-meta panel">
         <div>
-          <small>رقم الحوالة التجريبي</small>
-          <b dir="ltr">{transferMock.id}</b>
+          <small>رقم الحوالة المحلي</small>
+          <b dir="ltr">{transferId}</b>
         </div>
         <div>
           <small>التاريخ والوقت</small>
@@ -201,11 +207,11 @@ export default function NewTransfer() {
         </div>
         <div>
           <small>حالة الحوالة</small>
-          <StatusBadge status={saved ? "محفوظة تجريبيًا" : "مسودة"} />
+          <StatusBadge status={saved ? "محفوظة محليًا" : "مسودة"} />
         </div>
         <span className="transfer-demo">
           <Icon name="shield" size={16} />
-          محاكاة محلية فقط
+          سجلات محلية محفوظة
         </span>
       </div>
       <form noValidate onSubmit={save} className="transfer-form">
@@ -287,7 +293,7 @@ export default function NewTransfer() {
           role="status"
         >
           {message ||
-            "الحقول المعلّمة بـ * مطلوبة. الحفظ مؤقت داخل هذه الصفحة فقط."}
+            "الحقول المعلّمة بـ * مطلوبة. الحفظ دائم محليًا على هذا المتصفح."}
         </div>
         <div className="transfer-actions panel">
           <div className="transfer-primary-actions">
@@ -332,13 +338,13 @@ export default function NewTransfer() {
           <div>
             <h2 id="receipt-title">معاينة إيصال الحوالة</h2>
             <p>
-              أعمال المستقبل · نسخة تجريبية غير صالحة للتعامل المالي
+              أعمال المستقبل · نسخة محلية محفوظة على هذا الجهاز
             </p>
           </div>
         </div>
         <dl>
           {[
-            ["رقم الحوالة", transferMock.id],
+            ["رقم الحوالة", transferId],
             ["التاريخ والوقت", dateLabel],
             ["المرسل", values.sender],
             ["هاتف المرسل", values.senderPhone],

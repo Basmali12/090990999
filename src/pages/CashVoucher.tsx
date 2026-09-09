@@ -6,7 +6,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/ui";
 import { FinanceModal, FinanceDetails } from "../components/FinanceViews";
 import { useCustomers } from "../data/customerRecords";
-import { partnerMock } from "../data/partnerRecords";
+
 import "./financePages.css";
 import "./cashbox.css";
 const fmt = (n: number) =>
@@ -41,7 +41,7 @@ export default function CashVoucher({
   const title = payment ? "سند صرف" : "سند قبض";
   const [id,setId] = useState(
     () =>
-      `DEMO-${payment ? "PAY" : "REC"}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
+      `${payment ? "PAY" : "REC"}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
   );
   const [values, setValues] = useState<Values>(empty);
   const [errors, setErrors] = useState<Partial<Record<keyof Values, string>>>(
@@ -55,7 +55,7 @@ export default function CashVoucher({
     values.partyType === "عميل"
       ? customers.map((c) => c.name)
       : values.partyType === "شريك"
-        ? partnerMock.map((p) => p.name)
+        ? []
         : [];
   function change(key: keyof Values, value: string) {
     setValues((v) => ({
@@ -95,7 +95,8 @@ export default function CashVoucher({
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
-    const posted={...values,party:values.party.trim(),id};
+    const matches=customers.filter(c=>c.name===values.party.trim());
+    const posted={...values,party:values.party.trim(),id,customerId:values.partyType==='عميل'&&matches.length===1?matches[0].id:undefined};
     try {postCashVoucher({...posted,amount:Number(posted.amount),type:payment?'صرف':'قبض'});} catch(error){setMessage(error instanceof Error?error.message:'تعذر حفظ السند.');return;}
     setSaved(posted);
     setMessage(
@@ -150,18 +151,18 @@ export default function CashVoucher({
       </nav>
       <PageHeader
         title={title}
-        description={`إعداد ${title} تجريبي ومراجعة بياناته قبل الحفظ.`}
+        description={`إعداد ${title} محلي ومراجعة بياناته قبل الحفظ.`}
       />
       <p className="tl-disclaimer">
-        القبض يزيد رصيد الصندوق الرئيسي والصرف ينقصه بالعملة المختارة. الحفظ محلي خلال الجلسة، ويبقى عند التنقل بين الصفحات ويُعاد عند تحديث المتصفح.
+        القبض يزيد رصيد الصندوق الرئيسي والصرف ينقصه بالعملة المختارة. الحفظ محلي على هذا المتصفح، ويبقى بعد تحديث المتصفح وإغلاقه.
       </p>
       <div className="panel voucher-meta">
         <div>
-          <small>رقم السند التجريبي</small>
+          <small>رقم السند المحلي</small>
           <b dir="ltr">{id}</b>
         </div>
         <span className={`tl-badge ${saved ? "done" : "review"}`}>
-          {saved ? "محفوظ تجريبيًا" : "مسودة"}
+          {saved ? "محفوظ محليًا" : "مسودة"}
         </span>
       </div>
       <form noValidate onSubmit={submit}>
@@ -191,7 +192,7 @@ export default function CashVoucher({
                 onChange={(e) => change("party", e.target.value)}
                 required
                 maxLength={160}
-                placeholder="اسم الطرف أو اختيار اسم تجريبي"
+                placeholder="اسم الطرف أو اختيار اسم محلي"
                 aria-invalid={!!errors.party}
                 aria-describedby={
                   errors.party ? "voucher-party-error" : undefined
@@ -249,12 +250,12 @@ export default function CashVoucher({
           </div>
         </section>
 
-        <p className="tl-notice" role="status">
+        <p className={message.startsWith("لم")||message.startsWith("تعذر")?"tl-error":"tl-notice"} role={message.startsWith("لم")||message.startsWith("تعذر")?"alert":"status"}>
           {message}
         </p>
         <div className="panel voucher-actions">
           <button type="submit" value="save" className="tl-button primary">
-            حفظ تجريبي
+            حفظ محلي
           </button>
           <button type="submit" value="print" className="tl-button">
             حفظ وطباعة
@@ -263,7 +264,7 @@ export default function CashVoucher({
             type="button"
             className="tl-button"
             onClick={() => {
-              setId(`DEMO-${payment ? "PAY" : "REC"}-${crypto.randomUUID().slice(0,8).toUpperCase()}`);
+              setId(`${payment ? "PAY" : "REC"}-${crypto.randomUUID().slice(0,8).toUpperCase()}`);
               setValues(empty());
               setErrors({});
               setSaved(null);
@@ -288,9 +289,9 @@ export default function CashVoucher({
           close={() => setPreview(false)}
         >
           <div className="voucher-print">
-            <h2>{title} · نسخة تجريبية</h2>
+            <h2>{title} · نسخة محلية</h2>
             <p className="tl-disclaimer">
-              سند محلي تجريبي مُسجل في الصندوق الرئيسي. لا يمثل عملية مالية خارج التطبيق.
+              سند محلي محلي مُسجل في الصندوق الرئيسي. لا يمثل عملية مالية خارج التطبيق.
             </p>
             <FinanceDetails
               items={[
@@ -311,7 +312,7 @@ export default function CashVoucher({
               className="tl-button primary voucher-print-button"
               onClick={() => window.print()}
             >
-              طباعة الإيصال التجريبي
+              طباعة الإيصال المحلي
             </button>
           </div>
         </FinanceModal>

@@ -1,4 +1,6 @@
-import { useSyncExternalStore } from "react";
+import {useMemo} from 'react';
+import {useLocalData,updateLocal,localDate} from './localStore';
+import type {LocalData} from './localStore';
 export type Customer = {
   id: string;
   name: string;
@@ -11,72 +13,31 @@ export type Customer = {
   lastActivity: string;
   balances: Record<string, number>;
 };
-const names = [
-  "أحمد محمد علي",
-  "مصطفى خالد حسن",
-  "علي حسين كريم",
-  "عمر فاضل عباس",
-  "حسن إبراهيم سالم",
-  "محمد سعد جابر",
-  "سارة أحمد حسن",
-  "نور خالد علي",
-];
-let customers: Customer[] = names.map((name, i) => ({
-  id: `C-${1001 + i}`,
-  name,
-  phone: `07700000${101 + i}`,
-  address: ["بغداد، المنصور", "أربيل، المركز", "البصرة، العشار"][i % 3],
-  notes: "عميل تجريبي محلي",
-  active: i !== 3,
-  created: i < 4 ? "2026-09-02" : "2026-08-15",
-  updated: "2026-09-05",
-  lastActivity: "2026-09-04",
-  balances: {
-    USD: i % 3 === 0 ? 0 : (i % 3 === 1 ? 1 : -1) * (1000 + i * 50),
-    IQD: i % 3 === 0 ? 0 : (i % 3 === 1 ? 1 : -1) * (750000 + i * 10000),
-    ...(i === 4 ? { EUR: 200 } : {}),
-  },
-}));
-const listeners = new Set<() => void>();
-function subscribe(listener: () => void) {
-  listeners.add(listener);
-  return () => {
-    listeners.delete(listener);
-  };
+
+const round=(value:number)=>Number(value.toFixed(6));
+export function customerCashDelta(data:LocalData,id:string){
+ const balances:Record<string,number>={};
+ for(const posting of data.cash){if(posting.customerId===id && posting.partyType==='عميل')balances[posting.currency]=round((balances[posting.currency]||0)+(posting.type==='قبض'?posting.amount:-posting.amount));}
+ return balances;
 }
-export function useCustomers() {
-  return useSyncExternalStore(subscribe, () => customers);
+export function currentCustomers(data:LocalData):Customer[]{
+ return data.customers.map(customer=>{
+  const balances={...customer.balances};
+  for(const [currency,value] of Object.entries(customerCashDelta(data,customer.id)))balances[currency]=round((balances[currency]||0)+value);
+  const last=data.cash.filter(p=>p.customerId===customer.id&&p.partyType==='عميل').map(p=>p.date).sort().at(-1);
+  return {...customer,balances,lastActivity:last||customer.lastActivity,updated:last&&last>customer.updated?last:customer.updated};
+ });
 }
-export function saveCustomer(
-  id: string | null,
-  details: Pick<Customer, "name" | "phone" | "address" | "notes"> & Partial<Pick<Customer, "balances" | "active">>,
-) {
-  const date = "2026-09-05";
-  if (id) {
-    customers = customers.map((c) =>
-      c.id === id ? { ...c, ...details, updated: date } : c,
-    );
-  } else {
-    const next =
-      Math.max(1000, ...customers.map((c) => Number(c.id.slice(2)))) + 1;
-    customers = [
-      {
-        ...details,
-        id: `C-${next}`,
-        active: true,
-        created: date,
-        updated: date,
-        lastActivity: "—",
-        balances: { USD: 0, IQD: 0 },
-      },
-      ...customers,
-    ];
+export function useCustomers(){const data=useLocalData();return useMemo(()=>currentCustomers(data),[data]);}
+export function saveCustomer(id:string|null,details:Pick<Customer,'name'|'phone'|'address'|'notes'> & Partial<Pick<Customer,'balances'|'active'>>){
+ if(!details.name.trim()||Object.values(details.balances||{}).some(v=>!Number.isFinite(v)||Math.abs(v)>1e12))return false;
+ const date=localDate();return updateLocal(data=>{
+  if(id){
+   if(!data.customers.some(c=>c.id===id))throw Error('العميل غير موجود');
+   const delta=customerCashDelta(data,id);
+   return {...data,customers:data.customers.map(c=>c.id===id?{...c,...details,balances:details.balances?{...c.balances,...Object.fromEntries(Object.entries(details.balances).map(([currency,current])=>[currency,round(current-(delta[currency]||0))]))}:c.balances,updated:date}:c)};
   }
-  listeners.forEach((l) => l());
+  return {...data,customers:[{id:`C-${Math.max(1000,...data.customers.map(c=>Number(c.id.slice(2))||1000))+1}`,name:details.name.trim(),phone:details.phone,address:details.address,notes:details.notes,active:details.active??true,created:date,updated:date,lastActivity:'—',balances:details.balances??{USD:0,IQD:0}},...data.customers]};
+ });
 }
-export function toggleCustomer(id: string) {
-  customers = customers.map((c) =>
-    c.id === id ? { ...c, active: !c.active, updated: "2026-09-05" } : c,
-  );
-  listeners.forEach((l) => l());
-}
+export function toggleCustomer(id:string){return updateLocal(data=>({...data,customers:data.customers.map(c=>c.id===id?{...c,active:!c.active,updated:localDate()}:c)}));}

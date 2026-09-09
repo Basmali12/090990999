@@ -49,7 +49,7 @@ export default function Sidebar({
         </span>
         <div>
           <b>المكتب الرئيسي</b>
-          <small>بغداد · الفرع التجريبي</small>
+          <small>الصندوق الرئيسي</small>
         </div>
         <span className="tiny-dot" />
       </div>
@@ -105,7 +105,7 @@ export default function Sidebar({
         <Icon name="shield" />
         <div>
           <b>نسخة استعراضية</b>
-          <small>بيانات محلية تجريبية فقط</small>
+          <small>بيانات محفوظة محليًا</small>
         </div>
         <span title={`الإصدار ${currentVersion}`}>v{currentVersion}</span>
       </div>

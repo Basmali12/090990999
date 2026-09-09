@@ -45,10 +45,10 @@ export default function Cashbox() {
       </nav>
       <PageHeader
         title="الصندوق"
-        description="نظرة شاملة على السيولة وحركات الصندوق التجريبية."
+        description="نظرة شاملة على السيولة وحركات الصندوق المحلية."
       />
       <p className="tl-disclaimer">
-        اليوم: {cashboxDay}. سندات القبض والصرف المحفوظة تحدّث الصندوق الرئيسي محليًا خلال الجلسة. تُعاد الأرصدة التجريبية عند تحديث المتصفح.
+        اليوم: {cashboxDay}. سندات القبض والصرف المحفوظة تحدّث الصندوق الرئيسي محليًا على هذا المتصفح. تبقى البيانات محفوظة بعد إعادة فتح المتصفح.
       </p>
       <div className="tl-stats cashbox-stats">
         {[
@@ -95,7 +95,7 @@ export default function Cashbox() {
         <div className="panel-heading">
           <h2>آخر حركات الصندوق</h2>
           <span className="eyebrow">
-            {cashboxMovements.length} حركات تجريبية
+            {cashboxMovements.length} حركات محلية
           </span>
         </div>
         <FinanceRows

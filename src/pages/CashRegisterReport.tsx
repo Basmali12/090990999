@@ -1,3 +1,4 @@
+import {registers,boxName} from '../data/localRegisters';
 import {useCashLedger} from '../data/cashLedger';
 import {useCurrencies} from '../data/currencyStore';
 import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
@@ -10,13 +11,14 @@ import {
   FinanceDetails,
 } from "../components/FinanceViews";
 import {
-  registers,
+
   registerTypes,
-  registerDay,
-  boxName,
+
+
 } from "../data/cashRegistersMock";
 import "./financePages.css";
 import "./registerReport.css";
+const registerDay=new Date().toLocaleDateString('sv-SE');
 const fmt = (n: number) => new Intl.NumberFormat("en-US").format(n);
 const empty = {
   box: "",
@@ -194,7 +196,7 @@ export default function CashRegisterReport({
         }
       />
       <p className="tl-disclaimer">
-        أرصدة وسجل محليان خلال الجلسة. سندات القبض والصرف تحدّث الصندوق الرئيسي؛ بقية الصناديق بيانات توضيحية. الحركات المعلقة والملغاة لا تُحتسب في الرصيد.
+        أرصدة محفوظة على هذا المتصفح، محسوبة من سندات القبض والصرف وعمليات الصيرفة المكتملة.
       </p>
       {movements && <button className="tl-button primary" aria-expanded={expanded} aria-controls="cash-movement-ledger" onClick={()=>{setExpanded(!expanded);setSelected("");}}>سجل حركة الصندوق {expanded ? "−" : "+"}</button>}
       <AnimatePresence initial={false}>{(!movements || expanded) && <motion.div id={movements ? "cash-movement-ledger" : undefined} key="ledger" initial={movements && !reduced ? {height:0,opacity:0}:false} animate={{height:"auto",opacity:1}} exit={reduced ? {opacity:0}:{height:0,opacity:0}} transition={{duration:reduced ? 0 : .18}} style={movements ? {overflow:"hidden"}:undefined}>

@@ -1,3 +1,5 @@
+import {getLocalData} from './localStore';
+import type {LocalData} from './localStore';
 import type { Customer } from "./customerRecords";
 export const movementTypes = [
   "حوالة صادرة",
@@ -21,40 +23,12 @@ export type Movement = {
   status: string;
   notes: string;
 };
-export function mockMovements(customers: Customer[]): Movement[] {
-  return customers
-    .filter((c) => Number(c.id.slice(2)) <= 1008)
-    .flatMap((c) =>
-      Object.keys(c.balances).flatMap((currency) =>
-        movementTypes.map((type, i) => {
-          const amount =
-            [100, 250, 300, 50, 40, 20][i] * (currency === "IQD" ? 1000 : 1);
-          const debit = i === 0 || i === 3 || i === 5 ? amount : 0;
-          return {
-            id: `MV-${c.id.slice(2)}-${currency}-${i + 1}`,
-            customerId: c.id,
-            date: `2026-09-0${2 + Math.floor(i / 2)}T${10 + i}:00`,
-            type,
-            reference:
-              i < 2
-                ? `DEMO-${i === 0 ? "OUT" : "IN"}-${c.id.slice(2)}`
-                : `DOC-${c.id.slice(2)}-${i}`,
-            amount,
-            currency,
-            debit,
-            credit: debit ? 0 : amount,
-            description: `${type} للعميل · محاكاة محلية`,
-            status:
-              i === 5 && Number(c.id.slice(2)) % 2 === 0
-                ? "ملغاة"
-                : i === 4 && Number(c.id.slice(2)) % 2 === 0
-                  ? "قيد المراجعة"
-                  : "مكتملة",
-            notes: "حركة توضيحية، لا تمثل عملية مالية فعلية",
-          };
-        }),
-      ),
-    );
+export function mockMovements(customers: Customer[], data:LocalData=getLocalData()): Movement[] {
+ const ids=new Set(customers.map(c=>c.id));
+ return data.cash.filter(p=>p.partyType==='عميل'&&p.customerId&&ids.has(p.customerId)).map(p=>({
+  id:p.id,customerId:p.customerId!,date:p.date,type:p.type,reference:p.reference||p.id,amount:p.amount,currency:p.currency,
+  debit:p.type==='صرف'?p.amount:0,credit:p.type==='قبض'?p.amount:0,description:p.description||p.reason,status:'مكتملة',notes:p.notes,
+ })).sort((a,b)=>a.date.localeCompare(b.date)||a.id.localeCompare(b.id));
 }
 export function openingBalance(
   customer: Customer,

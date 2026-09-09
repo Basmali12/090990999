@@ -1,3 +1,4 @@
+import {localDate} from '../data/localStore';
 import {useCurrencies} from '../data/currencyStore';
 import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useEffect, useRef, useState } from "react";
@@ -90,7 +91,7 @@ export function RecordModal({
     commission: String(row.commission),
     notes: row.notes,
     status: row.status,
-    deliveredAt: "2026-09-05T14:00",
+    deliveredAt: localDate(),
   });
   const [error, setError] = useState("");
   useEffect(() => {
@@ -100,12 +101,12 @@ export function RecordModal({
   }, []);
   const titles: Record<Action, string> = {
     details: "تفاصيل الحوالة",
-    edit: "تعديل تجريبي",
-    cancel: "تأكيد الإلغاء التجريبي",
-    deliver: "تسجيل تسليم تجريبي",
+    edit: "تعديل محلي",
+    cancel: "تأكيد الإلغاء المحلي",
+    deliver: "تسجيل تسليم محلي",
     notes: "ملاحظات الحوالة",
     print: "معاينة طباعة الحوالة",
-    status: "تعديل الحالة التجريبية",
+    status: "تعديل الحالة المحلية",
   };
   const editable = action === "edit";
   const noteField = editable || action === "deliver" || action === "notes";
@@ -135,25 +136,14 @@ export function RecordModal({
       setError("اختر تاريخ تسليم لا يسبق تاريخ الحوالة.");
       return;
     }
-    if (editable)
-      updateTransfer(row.id, {
-        sender: draft.sender.trim(),
-        recipient: draft.recipient.trim(),
-        amount: Number(draft.amount),
-        commission: Number(draft.commission),
-        notes: draft.notes,
-      });
-    if (action === "notes") updateTransfer(row.id, { notes: draft.notes });
-    if (action === "status")
-      updateTransfer(row.id, { status: draft.status, deliveredAt: draft.status === "مسلمة" ? (row.deliveredAt || new Date().toISOString().slice(0,16)) : "" });
-    if (action === "cancel") updateTransfer(row.id, { status: "ملغاة" });
-    if (action === "deliver")
-      updateTransfer(row.id, {
-        status: "مسلمة",
-        deliveredAt: draft.deliveredAt,
-        notes: draft.notes,
-      });
-    if(action==='deliver')window.dispatchEvent(new CustomEvent('premium-success',{detail:'تم تسليم الحوالة تجريبيًا.'}));
+    let ok=true;
+    if(editable)ok=updateTransfer(row.id,{sender:draft.sender.trim(),recipient:draft.recipient.trim(),amount:Number(draft.amount),commission:Number(draft.commission),notes:draft.notes});
+    if(action==='notes')ok=updateTransfer(row.id,{notes:draft.notes});
+    if(action==='status')ok=updateTransfer(row.id,{status:draft.status,deliveredAt:draft.status==='مسلمة'?(row.deliveredAt||localDate()):''});
+    if(action==='cancel')ok=updateTransfer(row.id,{status:'ملغاة'});
+    if(action==='deliver')ok=updateTransfer(row.id,{status:'مسلمة',deliveredAt:draft.deliveredAt,notes:draft.notes});
+    if(!ok){setError('تعذر حفظ التعديل محليًا.');return;}
+    if(action==='deliver')window.dispatchEvent(new CustomEvent('premium-success',{detail:'تم تسليم الحوالة محليًا.'}));
     close();
   }
   return (
@@ -177,7 +167,7 @@ export function RecordModal({
         </button>
       </div>
       <p className="tl-disclaimer">
-        بيانات تجريبية فقط · لا يتم تنفيذ حركة مالية أو إرسال بيانات.
+        بيانات محلية فقط · لا يتم تنفيذ حركة مالية أو إرسال بيانات.
       </p>
       <form onSubmit={submit} noValidate>
         {editable ? (
@@ -258,7 +248,7 @@ export function RecordModal({
         )}
         {action === "cancel" && (
           <p className="tl-disclaimer">
-            سيتم تغيير الحالة إلى «ملغاة» داخل البيانات التجريبية لهذه الجلسة
+            سيتم تغيير الحالة إلى «ملغاة» داخل البيانات المحلية المحفوظة على المتصفح
             فقط.
           </p>
         )}
@@ -280,7 +270,7 @@ export function RecordModal({
             action !== "details" && (
               <button className="tl-button primary" type="submit">
                 {action === "deliver"
-                  ? "تأكيد التسليم التجريبي"
+                  ? "تأكيد التسليم المحلي"
                   : action === "cancel"
                     ? "تأكيد الإلغاء"
                     : "حفظ التعديل"}
@@ -424,7 +414,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
                 disabled={inactive}
                 onClick={() => setSelected({ id: row.id, action: "edit" })}
               >
-                تعديل تجريبي
+                تعديل محلي
               </button>
             )}
             {incoming && (
@@ -432,7 +422,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
                 disabled={row.status !== "بانتظار التسليم"}
                 onClick={() => setSelected({ id: row.id, action: "deliver" })}
               >
-                تسجيل تسليم تجريبي
+                تسجيل تسليم محلي
               </button>
             )}
             <button
@@ -452,7 +442,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
                 disabled={inactive}
                 onClick={() => setSelected({ id: row.id, action: "cancel" })}
               >
-                إلغاء تجريبي
+                إلغاء محلي
               </button>
             )}
           </>
@@ -555,16 +545,16 @@ export default function TransferList({ mode }: { mode: Mode }) {
             ? "ابحث في الحوالات الصادرة والواردة من مكان واحد."
             : incoming
               ? "تابع الحوالات الواردة وحالات التسليم في المكتب."
-              : "متابعة الحوالات الصادرة وإدارة حالاتها التجريبية."
+              : "متابعة الحوالات الصادرة وإدارة حالاتها المحلية."
         }
       >
         <span className="page-icon">
           <Icon name={search ? "search" : "transfer"} size={25} />
         </span>
-      </PageHeader>
+      <Link className="tl-button primary" to={`/transfers/new${mode==='incoming'?'?direction=incoming':''}`}>تسجيل حوالة {mode==='incoming'?'واردة':'صادرة'}</Link></PageHeader>
       <p className="tl-disclaimer">
-        محاكاة محلية · اليوم التجريبي: {demoDay} · التعديلات مشتركة بين هذه
-        الصفحات وتُفقد عند تحديث المتصفح. لا توجد حركات مالية فعلية.
+        محاكاة محلية · اليوم المحلي: {demoDay} · التعديلات مشتركة بين هذه
+        الصفحات وتبقى بعد تحديث المتصفح. تسوية النقد تُسجل بسند قبض أو صرف.
       </p>
       {!search && <div className="panel tl-filters">{input("quick","بحث سريع بالاسم أو رقم الحوالة أو الهاتف")}<button type="button" className="tl-button primary" aria-expanded={expanded} aria-controls="transfer-ledger" onClick={()=>{setExpanded(!expanded);setSelected(null);}}>سجل الحوالات {incoming ? "الواردة" : "الصادرة"} {expanded ? "−" : "+"}</button></div>}
       <AnimatePresence initial={false}>{(search || expanded) && <motion.div key="ledger" id={search ? undefined : "transfer-ledger"} initial={!search&&!reduced?{height:0,opacity:0}:false} animate={{height:"auto",opacity:1}} exit={reduced?{opacity:0}:{height:0,opacity:0}} transition={{duration:reduced?0:.18}} style={!search?{overflow:"hidden"}:undefined}>
@@ -720,7 +710,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
         <section className="panel tl-empty">
           <Icon name="search" size={38} />
           <h2>ابحث عن الحوالة التي تحتاجها</h2>
-          <p>أدخل رقمًا أو اسمًا، أو اضغط بحث لعرض جميع الحوالات التجريبية.</p>
+          <p>أدخل رقمًا أو اسمًا، أو اضغط بحث لعرض جميع الحوالات المحلية.</p>
         </section>
       ) : (
         <section className="panel tl-results">
@@ -731,7 +721,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
                 {filtered.length} حوالة · عرض {visible.length} في الصفحة
               </p>
             </div>
-            <span className="eyebrow">بيانات تجريبية</span>
+            <span className="eyebrow">بيانات محلية</span>
           </div>
           {!filtered.length ? (
             <div className="tl-empty">
@@ -820,7 +810,7 @@ export default function TransferList({ mode }: { mode: Mode }) {
       )}
       </motion.div>}</AnimatePresence>
       <section className="tl-print-list">
-        <h1>{title} · نسخة تجريبية</h1>
+        <h1>{title} · نسخة محلية</h1>
         <p>
           {filtered.length} حوالة مطابقة للفلاتر · {demoDay} · غير صالح للتعامل
           المالي

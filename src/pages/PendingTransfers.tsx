@@ -24,8 +24,8 @@ function waiting(row: TransferRecord) {
   const hours = Math.max(
     0,
     Math.floor(
-      (Date.parse(`${demoDay}T18:00:00+03:00`) -
-        Date.parse(`${row.date}:00+03:00`)) /
+      (Date.now() -
+        Date.parse(row.date)) /
         3600000,
     ),
   );
@@ -72,7 +72,7 @@ export default function PendingTransfers() {
         {(
           [
             ["details", "عرض التفاصيل"],
-            ["deliver", "تسجيل تسليم تجريبي"],
+            ["deliver", "تسجيل تسليم محلي"],
             ["status", "تعديل الحالة"],
             ["print", "طباعة"],
           ] as const
@@ -102,8 +102,8 @@ export default function PendingTransfers() {
         </span>
       </PageHeader>
       <p className="tl-disclaimer">
-        بيانات محلية مؤقتة فقط. مدة الانتظار محسوبة حتى {demoDay}، الساعة 18:00
-        بتوقيت بغداد، كتاريخ تجريبي ثابت.
+        سجلات محفوظة محليًا. مدة الانتظار محسوبة حتى {demoDay}
+        حسب وقت الجهاز.
       </p>
       <button className="tl-button primary" aria-expanded={expanded} aria-controls="pending-list" onClick={()=>{setExpanded(!expanded);setSelected(null);}}>الحوالات غير المستلمة / المعلقة {expanded?"−":"+"}</button><AnimatePresence initial={false}>{expanded&&<motion.div id="pending-list" initial={reduced?false:{height:0,opacity:0}} animate={{height:"auto",opacity:1}} exit={reduced?{opacity:0}:{height:0,opacity:0}} transition={{duration:reduced?0:.18}} style={{overflow:"hidden"}}>
       <div className="panel tl-filters">

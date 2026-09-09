@@ -45,7 +45,7 @@ export default function TopBar({
       <div className="topbar-end">
         <span className="local-tag">
           <i />
-          بيئة تجريبية
+          بيانات محلية
         </span>
         <PremiumButton
           className="icon-button"
@@ -59,8 +59,8 @@ export default function TopBar({
         <div className="user-info">
           <span className="avatar">أ م</span>
           <div>
-            <b>أحمد محمد</b>
-            <small>مدير المكتب · مستخدم تجريبي</small>
+            <b>المستخدم المحلي</b>
+            <small>حفظ محلي على الجهاز</small>
           </div>
         </div>
       </div>

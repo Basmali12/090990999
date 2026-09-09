@@ -1,3 +1,4 @@
+import {postCashVoucher} from '../data/cashLedger';
 import {useCurrencies} from '../data/currencyStore';
 import { useState } from "react";
 import type { FormEvent } from "react";
@@ -38,7 +39,7 @@ export default function CashVoucher({
   const navigate = useNavigate();
   const customers = useCustomers();
   const title = payment ? "سند صرف" : "سند قبض";
-  const [id] = useState(
+  const [id,setId] = useState(
     () =>
       `DEMO-${payment ? "PAY" : "REC"}-${crypto.randomUUID().slice(0, 8).toUpperCase()}`,
   );
@@ -94,9 +95,11 @@ export default function CashVoucher({
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!validate()) return;
-    setSaved({ ...values, party: values.party.trim(), id });
+    const posted={...values,party:values.party.trim(),id};
+    try {postCashVoucher({...posted,amount:Number(posted.amount),type:payment?'صرف':'قبض'});} catch(error){setMessage(error instanceof Error?error.message:'تعذر حفظ السند.');return;}
+    setSaved(posted);
     setMessage(
-      "تم حفظ السند التجريبي في ذاكرة الصفحة فقط؛ لا يؤثر على رصيد الصندوق أو سجل الحركات.",
+      "تم حفظ السند وتحديث رصيد الصندوق الرئيسي وسجل حركاته محليًا. إعادة حفظ نفس السند لا تضاعف المبلغ.",
     );
     if (
       (e.nativeEvent as SubmitEvent).submitter?.getAttribute("value") ===
@@ -150,8 +153,7 @@ export default function CashVoucher({
         description={`إعداد ${title} تجريبي ومراجعة بياناته قبل الحفظ.`}
       />
       <p className="tl-disclaimer">
-        محاكاة محلية فقط. السند محفوظ مؤقتًا داخل الصفحة ويُفقد عند المغادرة أو
-        تحديث المتصفح.
+        القبض يزيد رصيد الصندوق الرئيسي والصرف ينقصه بالعملة المختارة. الحفظ محلي خلال الجلسة، ويبقى عند التنقل بين الصفحات ويُعاد عند تحديث المتصفح.
       </p>
       <div className="panel voucher-meta">
         <div>
@@ -261,10 +263,11 @@ export default function CashVoucher({
             type="button"
             className="tl-button"
             onClick={() => {
+              setId(`DEMO-${payment ? "PAY" : "REC"}-${crypto.randomUUID().slice(0,8).toUpperCase()}`);
               setValues(empty());
               setErrors({});
               setSaved(null);
-              setMessage("تم مسح الحقول.");
+              setMessage("تم بدء سند جديد؛ السندات المحفوظة تبقى في سجل الصندوق.");
               document.getElementById("voucher-party")?.focus();
             }}
           >
@@ -287,8 +290,7 @@ export default function CashVoucher({
           <div className="voucher-print">
             <h2>{title} · نسخة تجريبية</h2>
             <p className="tl-disclaimer">
-              غير صالح للتعامل المالي. لم تُنفذ حركة مالية أو يُعدّل رصيد
-              الصندوق.
+              سند محلي تجريبي مُسجل في الصندوق الرئيسي. لا يمثل عملية مالية خارج التطبيق.
             </p>
             <FinanceDetails
               items={[

@@ -1,3 +1,4 @@
+import {useCashLedger} from '../data/cashLedger';
 import {useCurrencies} from '../data/currencyStore';
 import {AnimatePresence,motion,useReducedMotion} from 'motion/react';
 import { useState } from "react";
@@ -10,11 +11,8 @@ import {
 } from "../components/FinanceViews";
 import {
   registers,
-  registerCurrencies,
   registerTypes,
   registerDay,
-  registerMovements,
-  registerBalanceRows,
   boxName,
 } from "../data/cashRegistersMock";
 import "./financePages.css";
@@ -36,6 +34,8 @@ export default function CashRegisterReport({
 }: {
   movements?: boolean;
 }) {
+  const {registerMovements,registerBalanceRows}=useCashLedger();
+  const registerCurrencies=[...new Set(registerBalanceRows.map(row=>row.currency))];
   const currencies=useCurrencies();
   const [expanded,setExpanded]=useState(false); const reduced=useReducedMotion();
   const [filters, setFilters] = useState({ ...empty });
@@ -194,9 +194,7 @@ export default function CashRegisterReport({
         }
       />
       <p className="tl-disclaimer">
-        Mock محلي ثابت · اليوم التجريبي {registerDay}. لا تُرحّل المعاينات
-        المحفوظة إلى هذا السجل. الحركات المعلقة والملغاة لا تُحتسب في الداخل
-        والخارج أو الرصيد.
+        أرصدة وسجل محليان خلال الجلسة. سندات القبض والصرف تحدّث الصندوق الرئيسي؛ بقية الصناديق بيانات توضيحية. الحركات المعلقة والملغاة لا تُحتسب في الرصيد.
       </p>
       {movements && <button className="tl-button primary" aria-expanded={expanded} aria-controls="cash-movement-ledger" onClick={()=>{setExpanded(!expanded);setSelected("");}}>سجل حركة الصندوق {expanded ? "−" : "+"}</button>}
       <AnimatePresence initial={false}>{(!movements || expanded) && <motion.div id={movements ? "cash-movement-ledger" : undefined} key="ledger" initial={movements && !reduced ? {height:0,opacity:0}:false} animate={{height:"auto",opacity:1}} exit={reduced ? {opacity:0}:{height:0,opacity:0}} transition={{duration:reduced ? 0 : .18}} style={movements ? {overflow:"hidden"}:undefined}>
@@ -352,16 +350,10 @@ export default function CashRegisterReport({
           </>
         ) : (
           <>
-            {registerCurrencies.map((c, i) => (
+            {registerCurrencies.map((c) => (
               <article className="panel" key={c}>
                 <small>
-                  {
-                    [
-                      "إجمالي رصيد الدولار",
-                      "إجمالي رصيد الدينار",
-                      "إجمالي العملات الأخرى",
-                    ][i]
-                  }
+                  {c==='USD'?'إجمالي رصيد الدولار':c==='IQD'?'إجمالي رصيد الدينار':`إجمالي رصيد ${c}`}
                 </small>
                 <b className="register-stat" dir="ltr">
                   {!filters.currency || filters.currency === c

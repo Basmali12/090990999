@@ -1,3 +1,4 @@
+import {useCashLedger} from '../data/cashLedger';
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader, QuickActionCard } from "../components/ui";
@@ -8,14 +9,13 @@ import {
 } from "../components/FinanceViews";
 import {
   cashboxActions,
-  cashboxBalances,
-  cashboxDay,
-  cashboxMovements,
 } from "../data/cashboxMock";
 import "./financePages.css";
 import "./cashbox.css";
 const fmt = (n: number) => new Intl.NumberFormat("en-US").format(n);
 export default function Cashbox() {
+  const {cashboxBalances,cashboxMovements}=useCashLedger();
+  const d=new Date();const cashboxDay=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   const [selected, setSelected] = useState("");
   const current = cashboxMovements.find((m) => m.id === selected);
   const today = cashboxMovements.filter((m) => m.date.startsWith(cashboxDay));
@@ -48,8 +48,7 @@ export default function Cashbox() {
         description="نظرة شاملة على السيولة وحركات الصندوق التجريبية."
       />
       <p className="tl-disclaimer">
-        اليوم التجريبي: {cashboxDay}. أرصدة محلية ثابتة؛ حفظ سند قبض أو صرف لا
-        يغيّر هذه الأرصدة ولا يُنشئ حركة مالية.
+        اليوم: {cashboxDay}. سندات القبض والصرف المحفوظة تحدّث الصندوق الرئيسي محليًا خلال الجلسة. تُعاد الأرصدة التجريبية عند تحديث المتصفح.
       </p>
       <div className="tl-stats cashbox-stats">
         {[
@@ -68,7 +67,7 @@ export default function Cashbox() {
           [
             "رصيد العملات الأخرى",
             <b className="cashbox-stat" dir="ltr">
-              {fmt(cashboxBalances.EUR)} EUR
+              {Object.entries(cashboxBalances).filter(([code])=>!["USD","IQD"].includes(code)).map(([code,value])=><span key={code} style={{display:"block"}}>{fmt(value)} {code}</span>)}
             </b>,
           ],
           ["قبض اليوم", totals("قبض")],
@@ -145,6 +144,10 @@ export default function Cashbox() {
               ["رقم الحركة", current.id],
               ["التاريخ والوقت", current.date.replace("T", " · ")],
               ["نوع الحركة", current.type],
+              ["الطرف", current.party],
+              ["نوع الطرف", current.partyType],
+              ["سبب السند", current.reason||"—"],
+              ["الملاحظات", current.notes||"—"],
               ["المرجع", current.reference],
               ["البيان", current.description],
               ["المبلغ", `${fmt(current.amount)} ${current.currency}`],
